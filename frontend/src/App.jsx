@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import "./App.css";
 import SellerDashboard from "./SellerDashboard";
 
 const API_URL = "http://127.0.0.1:5000";
+const UPI_ID = "sriharika-k@upi";
 
 const defaultProducts = [
   {
@@ -115,6 +117,15 @@ function App() {
     instructions: "",
   });
 
+  const [paymentMethod, setPaymentMethod] = useState("cod");
+
+  const [cardDetails, setCardDetails] = useState({
+    name: "",
+    number: "",
+    expiry: "",
+    cvv: "",
+  });
+
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState(null);
 
@@ -145,18 +156,16 @@ function App() {
         : [];
 
       if (backendProducts.length > 0) {
-        const formattedProducts = backendProducts.map(
-          (product, index) => ({
-            id: product.id || product.product_id || index + 1,
-            name: product.name || "Unnamed Product",
-            category: product.category || "Groceries",
-            seller: product.seller || "Local Seller",
-            price: Number(product.price || 0),
-            unit: product.unit || "piece",
-            emoji: product.emoji || "📦",
-            fresh: product.fresh !== false,
-          })
-        );
+        const formattedProducts = backendProducts.map((product, index) => ({
+          id: product.id || product.product_id || index + 1,
+          name: product.name || "Unnamed Product",
+          category: product.category || "Groceries",
+          seller: product.seller || "Local Seller",
+          price: Number(product.price || 0),
+          unit: product.unit || "piece",
+          emoji: product.emoji || "📦",
+          fresh: product.fresh !== false,
+        }));
 
         setProducts(formattedProducts);
       }
@@ -257,7 +266,6 @@ function App() {
   );
 
   const deliveryFee = subtotal > 0 ? 20 : 0;
-
   const total = subtotal + deliveryFee;
 
   const updateCustomer = (field, value) => {
@@ -267,22 +275,84 @@ function App() {
     }));
   };
 
+  const updateMobile = (value) => {
+    const onlyNumbers = value.replace(/\D/g, "").slice(0, 10);
+
+    setCustomer((current) => ({
+      ...current,
+      mobile: onlyNumbers,
+    }));
+  };
+
+  const updateCardNumber = (value) => {
+    const onlyNumbers = value.replace(/\D/g, "").slice(0, 16);
+
+    setCardDetails((current) => ({
+      ...current,
+      number: onlyNumbers,
+    }));
+  };
+
+  const updateExpiry = (value) => {
+    let cleanValue = value.replace(/\D/g, "").slice(0, 4);
+
+    if (cleanValue.length >= 3) {
+      cleanValue =
+        cleanValue.substring(0, 2) +
+        "/" +
+        cleanValue.substring(2);
+    }
+
+    setCardDetails((current) => ({
+      ...current,
+      expiry: cleanValue,
+    }));
+  };
+
+  const updateCVV = (value) => {
+    const onlyNumbers = value.replace(/\D/g, "").slice(0, 3);
+
+    setCardDetails((current) => ({
+      ...current,
+      cvv: onlyNumbers,
+    }));
+  };
+
   const placeOrder = async (event) => {
     event.preventDefault();
 
     if (
-      !customer.name ||
+      !customer.name.trim() ||
       !customer.mobile ||
-      !customer.village ||
-      !customer.address
+      !customer.village.trim() ||
+      !customer.address.trim()
     ) {
-      alert("Please fill in all required fields.");
+      alert("Please fill in all required delivery fields.");
+      return;
+    }
+
+    if (!/^\d{10}$/.test(customer.mobile)) {
+      alert("Mobile number must contain exactly 10 digits.");
       return;
     }
 
     if (cart.length === 0) {
       alert("Your cart is empty.");
       return;
+    }
+
+    if (paymentMethod === "card") {
+      if (
+        !cardDetails.name.trim() ||
+        !/^\d{16}$/.test(cardDetails.number) ||
+        !/^\d{2}\/\d{2}$/.test(cardDetails.expiry) ||
+        !/^\d{3}$/.test(cardDetails.cvv)
+      ) {
+        alert(
+          "Please enter valid card details: 16-digit card number, MM/YY expiry and 3-digit CVV."
+        );
+        return;
+      }
     }
 
     try {
@@ -302,6 +372,12 @@ function App() {
           delivery_fee: deliveryFee,
           total: total,
           status: "Pending",
+          payment_method:
+            paymentMethod === "cod"
+              ? "Cash on Delivery"
+              : paymentMethod === "upi"
+              ? "UPI"
+              : "Card",
         }),
       });
 
@@ -314,6 +390,13 @@ function App() {
       setOrderId(data.order_id || data.id || null);
       setOrderPlaced(true);
       setCart([]);
+
+      setCardDetails({
+        name: "",
+        number: "",
+        expiry: "",
+        cvv: "",
+      });
     } catch (error) {
       console.error(error);
 
@@ -333,6 +416,12 @@ function App() {
     setPage("home");
     loadProducts();
   };
+
+  const upiPaymentUrl =
+    `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
+    `&pn=${encodeURIComponent("RuralHome")}` +
+    `&am=${encodeURIComponent(total.toFixed(2))}` +
+    `&cu=INR`;
 
   return (
     <div className="app">
@@ -435,6 +524,8 @@ function App() {
                       instructions: "",
                     });
 
+                    setPaymentMethod("cod");
+
                     loadProducts();
                   }}
                 >
@@ -461,8 +552,8 @@ function App() {
                   <h2>📍 Delivery Details</h2>
 
                   <p className="form-description">
-                    Enter your details so we can deliver your
-                    order to your home.
+                    Enter your details so we can deliver
+                    your order to your home.
                   </p>
 
                   <label>Full Name *</label>
@@ -477,6 +568,7 @@ function App() {
                       )
                     }
                     placeholder="Enter your full name"
+                    required
                   />
 
                   <label>Mobile Number *</label>
@@ -485,13 +577,17 @@ function App() {
                     type="tel"
                     value={customer.mobile}
                     onChange={(event) =>
-                      updateCustomer(
-                        "mobile",
-                        event.target.value
-                      )
+                      updateMobile(event.target.value)
                     }
-                    placeholder="Enter your mobile number"
+                    placeholder="Enter 10 digit mobile number"
+                    maxLength="10"
+                    inputMode="numeric"
+                    required
                   />
+
+                  <small>
+                    Enter exactly 10 digits.
+                  </small>
 
                   <label>Village / Town *</label>
 
@@ -505,6 +601,7 @@ function App() {
                       )
                     }
                     placeholder="Enter your village"
+                    required
                   />
 
                   <label>
@@ -521,9 +618,12 @@ function App() {
                     }
                     placeholder="House number, street, landmark..."
                     rows="4"
+                    required
                   />
 
-                  <label>Delivery Instructions</label>
+                  <label>
+                    Delivery Instructions
+                  </label>
 
                   <textarea
                     value={customer.instructions}
@@ -538,24 +638,190 @@ function App() {
                   />
 
                   <h2 className="payment-title">
-                    💵 Payment Method
+                    💳 Payment Method
                   </h2>
 
                   <div className="payment-option">
                     <input
                       type="radio"
-                      checked
-                      readOnly
+                      name="payment"
+                      checked={paymentMethod === "cod"}
+                      onChange={() =>
+                        setPaymentMethod("cod")
+                      }
                     />
 
                     <div>
-                      <strong>Cash on Delivery</strong>
+                      <strong>
+                        💵 Cash on Delivery
+                      </strong>
 
                       <p>
                         Pay when your order arrives.
                       </p>
                     </div>
                   </div>
+
+                  <div className="payment-option">
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={paymentMethod === "upi"}
+                      onChange={() =>
+                        setPaymentMethod("upi")
+                      }
+                    />
+
+                    <div>
+                      <strong>
+                        📱 UPI Payment
+                      </strong>
+
+                      <p>
+                        Pay using Google Pay, PhonePe,
+                        Paytm or another UPI app.
+                      </p>
+                    </div>
+                  </div>
+
+                  {paymentMethod === "upi" && (
+                    <div className="upi-payment-box">
+                      <h3>📷 Scan & Pay</h3>
+
+                      <p>
+                        Scan this QR code using your
+                        UPI application.
+                      </p>
+
+                      <div className="qr-container">
+                        <QRCodeSVG
+                          value={upiPaymentUrl}
+                          size={220}
+                          level="H"
+                        />
+                      </div>
+
+                      <p>
+                        <strong>UPI ID:</strong>{" "}
+                        {UPI_ID}
+                      </p>
+
+                      <p>
+                        <strong>Amount:</strong> ₹
+                        {total}
+                      </p>
+
+                      <a
+                        href={upiPaymentUrl}
+                        className="upi-open-button"
+                      >
+                        Open UPI App
+                      </a>
+
+                      <small>
+                        Payment confirmation should be
+                        verified before treating an order
+                        as paid.
+                      </small>
+                    </div>
+                  )}
+
+                  <div className="payment-option">
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={paymentMethod === "card"}
+                      onChange={() =>
+                        setPaymentMethod("card")
+                      }
+                    />
+
+                    <div>
+                      <strong>
+                        💳 Card Payment
+                      </strong>
+
+                      <p>
+                        Enter card details for demo
+                        payment.
+                      </p>
+                    </div>
+                  </div>
+
+                  {paymentMethod === "card" && (
+                    <div className="card-payment-box">
+                      <h3>💳 Card Details</h3>
+
+                      <label>Cardholder Name *</label>
+
+                      <input
+                        type="text"
+                        value={cardDetails.name}
+                        onChange={(event) =>
+                          setCardDetails((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        placeholder="Name on card"
+                      />
+
+                      <label>Card Number *</label>
+
+                      <input
+                        type="text"
+                        value={cardDetails.number}
+                        onChange={(event) =>
+                          updateCardNumber(
+                            event.target.value
+                          )
+                        }
+                        placeholder="16 digit card number"
+                        maxLength="16"
+                        inputMode="numeric"
+                      />
+
+                      <div className="card-row">
+                        <div>
+                          <label>Expiry *</label>
+
+                          <input
+                            type="text"
+                            value={cardDetails.expiry}
+                            onChange={(event) =>
+                              updateExpiry(
+                                event.target.value
+                              )
+                            }
+                            placeholder="MM/YY"
+                            maxLength="5"
+                          />
+                        </div>
+
+                        <div>
+                          <label>CVV *</label>
+
+                          <input
+                            type="password"
+                            value={cardDetails.cvv}
+                            onChange={(event) =>
+                              updateCVV(
+                                event.target.value
+                              )
+                            }
+                            placeholder="CVV"
+                            maxLength="3"
+                            inputMode="numeric"
+                          />
+                        </div>
+                      </div>
+
+                      <small>
+                        Demo only. Card details are not
+                        sent to the RuralHome backend.
+                      </small>
+                    </div>
+                  )}
 
                   <button
                     className="place-order-button"
@@ -581,7 +847,8 @@ function App() {
                         <strong>{item.name}</strong>
 
                         <span>
-                          {item.quantity} × ₹{item.price}
+                          {item.quantity} × ₹
+                          {item.price}
                         </span>
                       </div>
 
@@ -607,7 +874,6 @@ function App() {
 
                   <div className="summary-total">
                     <span>Total</span>
-
                     <strong>₹{total}</strong>
                   </div>
                 </div>
@@ -669,7 +935,9 @@ function App() {
                         <div className="quantity-control">
                           <button
                             onClick={() =>
-                              decreaseQuantity(item.id)
+                              decreaseQuantity(
+                                item.id
+                              )
                             }
                           >
                             −
@@ -679,7 +947,9 @@ function App() {
 
                           <button
                             onClick={() =>
-                              increaseQuantity(item.id)
+                              increaseQuantity(
+                                item.id
+                              )
                             }
                           >
                             +
@@ -820,7 +1090,9 @@ function App() {
                         {category.emoji}
                       </div>
 
-                      <span>{category.name}</span>
+                      <span>
+                        {category.name}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -834,7 +1106,8 @@ function App() {
                     </p>
 
                     <h2>
-                      {selectedCategory === "All"
+                      {selectedCategory ===
+                      "All"
                         ? "Fresh & Popular"
                         : selectedCategory}
                     </h2>
@@ -861,13 +1134,12 @@ function App() {
                         sellers.
                       </p>
                     </div>
-                  ) : filteredProducts.length === 0 ? (
+                  ) : filteredProducts.length ===
+                    0 ? (
                     <div className="no-products">
                       <div>🔍</div>
 
-                      <h3>
-                        No products found
-                      </h3>
+                      <h3>No products found</h3>
 
                       <p>
                         Try another search or
@@ -905,6 +1177,7 @@ function App() {
                           <div className="product-bottom">
                             <div className="price">
                               ₹{product.price}
+
                               <span>
                                 / {product.unit}
                               </span>
@@ -933,16 +1206,17 @@ function App() {
                   </p>
 
                   <h2>
-                    Bringing the local market closer
-                    to your home.
+                    Bringing the local market
+                    closer to your home.
                   </h2>
 
                   <p>
-                    We connect rural families with
-                    nearby farmers, vegetable sellers
-                    and local shops. Shop locally and
-                    get your daily essentials delivered
-                    to your doorstep.
+                    We connect rural families
+                    with nearby farmers,
+                    vegetable sellers and local
+                    shops. Shop locally and get
+                    your daily essentials
+                    delivered to your doorstep.
                   </p>
 
                   <div className="benefits">
@@ -953,8 +1227,9 @@ function App() {
                         <h3>Fresh Products</h3>
 
                         <p>
-                          Fresh vegetables and farm
-                          products from local sellers.
+                          Fresh vegetables and
+                          farm products from
+                          local sellers.
                         </p>
                       </div>
                     </div>
@@ -968,8 +1243,9 @@ function App() {
                         </h3>
 
                         <p>
-                          Help local farmers and small
-                          shops reach more customers.
+                          Help local farmers and
+                          small shops reach more
+                          customers.
                         </p>
                       </div>
                     </div>
@@ -981,8 +1257,9 @@ function App() {
                         <h3>Home Delivery</h3>
 
                         <p>
-                          Order from home and receive
-                          products at your doorstep.
+                          Order from home and
+                          receive products at
+                          your doorstep.
                         </p>
                       </div>
                     </div>
@@ -1024,9 +1301,7 @@ function App() {
                   👋
                 </div>
 
-                <h2>
-                  Welcome to RuralHome
-                </h2>
+                <h2>Welcome to RuralHome</h2>
 
                 <p>
                   Login will be connected to the
@@ -1036,6 +1311,8 @@ function App() {
                 <input
                   type="text"
                   placeholder="Mobile Number"
+                  maxLength="10"
+                  inputMode="numeric"
                 />
 
                 <button
