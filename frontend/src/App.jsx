@@ -109,6 +109,10 @@ function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [sellerMode, setSellerMode] = useState(false);
 
+  const [location, setLocation] = useState("");
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [showVillageSelector, setShowVillageSelector] = useState(false);
+
   const [customer, setCustomer] = useState({
     name: "",
     mobile: "",
@@ -131,12 +135,6 @@ function App() {
 
   useEffect(() => {
     loadProducts();
-
-    const interval = setInterval(() => {
-      loadProducts();
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, []);
 
   const loadProducts = async () => {
@@ -174,6 +172,126 @@ function App() {
     } finally {
       setProductsLoading(false);
     }
+  };
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Your browser does not support location detection.");
+      return;
+    }
+
+    setLocationLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error("Could not find address");
+          }
+
+          const data = await response.json();
+          const address = data.address || {};
+
+          const detectedVillage =
+            address.village ||
+            address.hamlet ||
+            address.town ||
+            address.city ||
+            address.suburb ||
+            address.county ||
+            "";
+
+          const state = address.state || "";
+          const country = address.country || "";
+
+          let displayLocation = detectedVillage;
+
+          if (state && detectedVillage) {
+            displayLocation = `${detectedVillage}, ${state}`;
+          }
+
+          if (!displayLocation && data.display_name) {
+            displayLocation = data.display_name.split(",").slice(0, 2).join(",");
+          }
+
+          if (!displayLocation) {
+            displayLocation = "Location detected";
+          }
+
+          setLocation(displayLocation);
+
+          setCustomer((current) => ({
+            ...current,
+            village: displayLocation,
+          }));
+
+          setShowVillageSelector(false);
+        } catch (error) {
+          console.error("Address detection error:", error);
+
+          const coordinates = `${latitude.toFixed(
+            4
+          )}, ${longitude.toFixed(4)}`;
+
+          setLocation(`Location detected (${coordinates})`);
+
+          setCustomer((current) => ({
+            ...current,
+            village: `Location detected (${coordinates})`,
+          }));
+
+          alert(
+            "Your location was detected, but the village name could not be found. You can enter your village manually."
+          );
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      (error) => {
+        console.error("Location error:", error);
+        setLocationLoading(false);
+
+        if (error.code === 1) {
+          alert(
+            "Location permission was denied. Please allow location access in your browser."
+          );
+        } else if (error.code === 2) {
+          alert("Your location could not be determined. Please try again.");
+        } else if (error.code === 3) {
+          alert("Location detection timed out. Please try again.");
+        } else {
+          alert("Unable to detect your location.");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 300000,
+      }
+    );
+  };
+
+  const selectVillage = (village) => {
+    setLocation(village);
+
+    setCustomer((current) => ({
+      ...current,
+      village,
+    }));
+
+    setShowVillageSelector(false);
   };
 
   const filteredProducts = useMemo(() => {
@@ -449,8 +567,14 @@ function App() {
               <span>Home</span>
             </div>
 
-            <button className="location-button">
-              📍 Select your village
+            <button
+              className="location-button"
+              onClick={() => setShowVillageSelector(true)}
+            >
+              📍{" "}
+              {locationLoading
+                ? "Detecting..."
+                : location || "Select your village"}
             </button>
 
             <div className="header-actions">
@@ -482,6 +606,85 @@ function App() {
               </button>
             </div>
           </header>
+
+          {showVillageSelector && (
+            <div
+              className="modal-overlay"
+              onClick={() => setShowVillageSelector(false)}
+            >
+              <div
+                className="login-modal"
+                onClick={(event) =>
+                  event.stopPropagation()
+                }
+              >
+                <button
+                  className="close-modal"
+                  onClick={() =>
+                    setShowVillageSelector(false)
+                  }
+                >
+                  ✕
+                </button>
+
+                <div className="login-icon">📍</div>
+
+                <h2>Select Your Location</h2>
+
+                <p>
+                  Automatically detect your village or
+                  enter it manually.
+                </p>
+
+                <button
+                  className="primary-button"
+                  onClick={detectLocation}
+                  disabled={locationLoading}
+                >
+                  {locationLoading
+                    ? "Detecting Location..."
+                    : "📍 Detect My Location"}
+                </button>
+
+                <div
+                  style={{
+                    margin: "18px 0",
+                    textAlign: "center",
+                    fontWeight: "600",
+                  }}
+                >
+                  OR
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="Enter village / town"
+                  value={customer.village}
+                  onChange={(event) => {
+                    updateCustomer(
+                      "village",
+                      event.target.value
+                    );
+                    setLocation(event.target.value);
+                  }}
+                />
+
+                <button
+                  className="primary-button"
+                  onClick={() => {
+                    if (!customer.village.trim()) {
+                      alert("Please enter your village.");
+                      return;
+                    }
+
+                    selectVillage(customer.village);
+                  }}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
 
           {orderPlaced ? (
             <main className="success-page">
@@ -525,7 +728,6 @@ function App() {
                     });
 
                     setPaymentMethod("cod");
-
                     loadProducts();
                   }}
                 >
@@ -594,15 +796,29 @@ function App() {
                   <input
                     type="text"
                     value={customer.village}
-                    onChange={(event) =>
+                    onChange={(event) => {
                       updateCustomer(
                         "village",
                         event.target.value
-                      )
-                    }
+                      );
+                      setLocation(event.target.value);
+                    }}
                     placeholder="Enter your village"
                     required
                   />
+
+                  <button
+                    type="button"
+                    className="location-button"
+                    onClick={detectLocation}
+                    disabled={locationLoading}
+                    style={{ marginBottom: "15px" }}
+                  >
+                    📍{" "}
+                    {locationLoading
+                      ? "Detecting..."
+                      : "Use My Current Location"}
+                  </button>
 
                   <label>
                     House / Door Number & Address *
@@ -1106,8 +1322,7 @@ function App() {
                     </p>
 
                     <h2>
-                      {selectedCategory ===
-                      "All"
+                      {selectedCategory === "All"
                         ? "Fresh & Popular"
                         : selectedCategory}
                     </h2>
