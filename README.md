@@ -1,468 +1,428 @@
-🌾 RuralHomeDelivery
+\# 🌾 RuralHomeDelivery
 
 
 
-A full-stack rural e-commerce platform that connects rural families with nearby farmers, local shops, and sellers, making it easier to purchase fresh vegetables, fruits, groceries, and daily essentials from home.
+\### A Full-Stack E-Commerce Platform for Rural Communities
 
 
 
-📌 Project Overview
+\*\*RuralHomeDelivery\*\* is a full-stack web application designed to connect rural customers with nearby farmers, local shops, and small-scale sellers.
 
 
 
-RuralHomeDelivery is designed to bring the local market closer to rural customers.
+The platform provides a convenient way for customers to discover local products, manage their shopping cart, provide delivery details, choose a payment method, and place orders online.
 
 
 
-The platform allows customers to browse products from local sellers, search and filter products, add items to a shopping cart, provide delivery details, and place orders.
+> \*\*Bringing local products closer to every rural home.\*\*
 
 
 
-Local sellers can use the seller dashboard to manage products and view customer orders.
+\---
 
 
 
-🎯 Problem Statement
+\## 🚀 Key Features
 
 
 
-People living in rural areas may have limited access to convenient online shopping services for fresh vegetables, fruits, groceries, and daily essentials.
+\### Customer
 
 
 
-At the same time, local farmers and small shop owners may have difficulty reaching more customers.
+\* Browse and search products
 
+\* Filter products by category
 
+\* View product details, price, and unit
 
-RuralHomeDelivery aims to solve this problem by providing a simple digital platform that connects rural customers with local sellers.
+\* Add products to the shopping cart
 
+\* Increase, decrease, and remove cart items
 
+\* Automatic subtotal, delivery fee, and total calculation
 
-✨ Features
+\* Secure 10-digit mobile number validation
 
-👨‍👩‍👧 Customer Features
+\* Checkout and delivery information
 
-Browse products from local sellers
+\* Cash on Delivery
 
-Search for products
+\* UPI QR payment
 
-Filter products by category
+\* Card payment interface
 
-View product price and unit
+\* Order confirmation and order ID
 
-Add products to cart
 
-Increase or decrease product quantity
 
-Remove products from cart
+\### Seller
 
-View order summary
 
-Enter delivery details
 
-Cash on Delivery option
+\* Seller dashboard
 
-Place orders
+\* Manage product listings
 
-Receive order confirmation
+\* View available products
 
-View order ID
+\* View customer orders
 
-🌾 Seller Features
+\* Monitor order information
 
-Seller dashboard
 
-Manage local products
 
-View available products
+\---
 
-View customer orders
 
-Monitor order information
 
-🛒 Shopping Features
+\## 🛠️ Technology Stack
 
-Product categories
+| Category | Technologies |
+|---|---|
+| **Frontend** | React.js, Vite, JavaScript, HTML5, CSS3 |
+| **Backend** | Python, Flask, REST API |
+| **Database** | SQLite |
+| **Payment UI** | UPI QR, Card Interface, Cash on Delivery |
+| **Development** | Visual Studio Code, npm |
+| **Version Control** | Git, GitHub |
 
-Fresh product badges
+                         
 
-Shopping cart
 
-Automatic subtotal calculation
 
-Delivery fee calculation
+\---
 
-Total price calculation
 
-Checkout system
 
-🛠️ Technologies Used
+\## 🏗️ Application Architecture
 
-Frontend
 
-React.js
 
-Vite
+```text
 
-JavaScript
+┌─────────────────────┐
 
-HTML5
+│      Customer       │
 
-CSS3
+└──────────┬──────────┘
 
-Backend
+&#x20;          │
 
-Python
+&#x20;          ▼
 
-Flask
+┌─────────────────────┐
 
-REST API
+│   React + Vite      │
 
-Database
+│      Frontend       │
 
-SQLite
+└──────────┬──────────┘
 
-Development Tools
+&#x20;          │
 
-Visual Studio Code
+&#x20;       REST API
 
-Git
+&#x20;          │
 
-GitHub
+&#x20;          ▼
 
-npm
+┌─────────────────────┐
 
-🏗️ Project Structure
+│   Python + Flask    │
 
-RuralHomeDelivery/
+│       Backend       │
 
-│
+└──────────┬──────────┘
 
-├── README.md
+&#x20;          │
 
-├── .gitignore
+&#x20;          ▼
 
-│
+┌─────────────────────┐
 
-├── backend/
+│       SQLite        │
 
-│   └── app.py
+│      Database       │
 
-│
+└─────────────────────┘
 
-├── frontend/
+&#x20;          ▲
 
-│   ├── public/
+&#x20;          │
 
-│   ├── src/
+┌──────────┴──────────┐
 
-│   │   ├── App.jsx
+│  Seller Dashboard   │
 
-│   │   ├── App.css
+└─────────────────────┘
 
-│   │   ├── SellerDashboard.jsx
+```
 
-│   │   ├── SellerDashboard.css
 
-│   │   ├── main.jsx
 
-│   │   └── index.css
+\---
 
-│   │
 
-│   ├── package.json
 
-│   ├── package-lock.json
+\## 📸 Application Preview
 
-│   └── vite.config.js
 
-│
 
-└── screenshots/
+## 📸 Application Preview
 
-🔄 Customer Workflow
+### 🏠 Home Page
 
-Customer
+<img src="screenshots/home-page.png" width="500">
 
-&#x20;  ↓
+### 🛍️ Product Catalogue
 
-Open RuralHomeDelivery
+<img src="screenshots/products.png" width="500">
 
-&#x20;  ↓
+### 🛒 Shopping Cart
 
-Select / Search Products
+<img src="screenshots/cart.png" width="500">
 
-&#x20;  ↓
 
-Add Products to Cart
+\## 🔄 Customer Workflow
 
-&#x20;  ↓
 
-View Cart
 
-&#x20;  ↓
+```text
 
-Proceed to Checkout
+Browse Products
 
-&#x20;  ↓
+&#x20;     ↓
+
+Search / Filter
+
+&#x20;     ↓
+
+Add to Cart
+
+&#x20;     ↓
+
+Review Cart
+
+&#x20;     ↓
+
+Checkout
+
+&#x20;     ↓
 
 Enter Delivery Details
 
-&#x20;  ↓
+&#x20;     ↓
 
-Select Cash on Delivery
+Select Payment Method
 
-&#x20;  ↓
+&#x20;     ↓
 
 Place Order
 
-&#x20;  ↓
+&#x20;     ↓
 
 Order Confirmation
 
-🌾 Seller Workflow
+```
 
-Seller
 
-&#x20;  ↓
 
-Open Seller Dashboard
+\---
 
-&#x20;  ↓
 
-Manage Products
 
-&#x20;  ↓
+\## ⚙️ Installation \& Setup
 
-View Customer Orders
 
-&#x20;  ↓
 
-Process Orders
+\### Prerequisites
 
-⚙️ How to Run the Project
 
-1\. Clone the Repository
+
+Make sure the following are installed:
+
+
+
+\* Python
+
+\* Node.js and npm
+
+\* Git
+
+
+
+\### 1. Clone the Repository
+
+
+
+```bash
 
 git clone https://github.com/sriharika-k/RuralHomeDelivery.git
 
-2\. Open the Project
-
 cd RuralHomeDelivery
 
-3\. Run the Backend
+```
 
 
 
-Open a terminal and go to the backend folder:
+\### 2. Start the Backend
 
 
+
+Open a terminal:
+
+
+
+```bash
 
 cd backend
 
-
-
-Install the required Python packages if needed:
-
-
-
 pip install flask flask-cors
-
-
-
-Run the Flask server:
-
-
 
 python app.py
 
+```
 
 
-The backend will normally run at:
+
+The Flask backend will normally run at:
 
 
+
+```text
 
 http://127.0.0.1:5000
 
-4\. Run the Frontend
+```
 
 
 
-Open another terminal and go to the frontend folder:
+\### 3. Start the Frontend
 
 
+
+Open a second terminal:
+
+
+
+```bash
 
 cd frontend
 
-
-
-Install dependencies:
-
-
-
 npm install
-
-
-
-Start the Vite development server:
-
-
 
 npm run dev
 
+```
 
 
-Open the URL shown in the terminal, normally:
+
+The Vite development server will normally run at:
 
 
+
+```text
 
 http://localhost:5173
 
-📸 Screenshots
+```
 
 
 
-Screenshots of the application will be added here.
+\---
 
 
 
-🏠 Home Page
+\## 🔮 Future Enhancements
 
 
 
+The platform can be further improved with:
 
 
 
+\* 🔐 Customer and seller authentication
 
+\* 💳 Production payment gateway integration
 
+\* 📦 Real-time order tracking
 
-🛍️ Products
+\* 🚚 Delivery partner management
 
+\* 📍 Location and village-based product discovery
 
+\* ⭐ Product and seller ratings
 
+\* 📱 Android and iOS applications
 
+\* ☁️ Cloud deployment
 
+\* 🔔 SMS and WhatsApp notifications
 
+\* 🌐 Multilingual support for rural users
 
+\* 📊 Seller analytics and reporting
 
 
-🛒 Shopping Cart
 
+\---
 
 
 
+\## 🎓 Academic Project
 
 
 
+\*\*Project:\*\* RuralHomeDelivery
 
+\*\*Type:\*\* Full-Stack Web Application
 
-💳 Checkout
+\*\*Domain:\*\* E-Commerce \& Rural Digital Services
 
+\*\*Frontend:\*\* React.js + Vite
 
+\*\*Backend:\*\* Python + Flask
 
+\*\*Database:\*\* SQLite
 
+\*\*Year:\*\* 2026
 
 
 
+\---
 
 
-🌾 Seller Dashboard
 
+\## 👩‍💻 Author
 
 
 
+\### Sriharika K
 
 
 
+\*\*B.Tech – Computer Science \& Engineering\*\*
 
 
-✅ Order Confirmation
 
+GitHub:
 
+https://github.com/sriharika-k
 
 
 
+\---
 
 
 
+\### ⭐ Project
 
-🔮 Future Scope
 
 
+Developed as an academic full-stack web application to explore how digital commerce can help connect \*\*rural customers with local sellers and farmers\*\*.
 
-The project can be enhanced with the following features:
 
 
-
-User registration and login
-
-Seller authentication
-
-Online payment integration
-
-Order tracking
-
-Delivery partner management
-
-Real-time order status
-
-Location and village-based product discovery
-
-Product reviews and ratings
-
-Seller ratings
-
-Mobile application
-
-Cloud deployment
-
-Notifications through SMS or WhatsApp
-
-Multilingual support for rural users
-
-🎓 Academic Project
-
-
-
-Project Name: RuralHomeDelivery
-
-
-
-Project Type: Full-Stack Web Application
-
-
-
-Frontend: React.js + Vite
-
-
-
-Backend: Python + Flask
-
-
-
-Database: SQLite
-
-
-
-Year: 2026
-
-
-
-👩‍💻 Author
-
-
-
-Sriharika K
-
-
-
-GitHub: https://github.com/sriharika-k
-
-
-
-📄 License
-
-
-
-This project is developed for academic and educational purposes.
+\*\*RuralHomeDelivery — Local products. Local sellers. Delivered to your home. 🌾\*\*
 
