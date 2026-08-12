@@ -21,7 +21,6 @@ CORS(app)
 # ==========================================
 
 class Product(db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
 
     name = db.Column(db.String(100), nullable=False)
@@ -44,7 +43,6 @@ class Product(db.Model):
 # ==========================================
 
 class Order(db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
 
     customer_name = db.Column(
@@ -121,9 +119,8 @@ with app.app_context():
 
 @app.route("/")
 def home():
-
     return jsonify({
-        "message": "RuralHome Delivery Backend is Running!",
+        "message": "RuralHomeDelivery Backend is Running!",
         "status": "success"
     })
 
@@ -140,7 +137,6 @@ def get_products():
     result = []
 
     for product in products:
-
         result.append({
             "id": product.id,
             "name": product.name,
@@ -169,35 +165,60 @@ def add_product():
             "error": "No data received"
         }), 400
 
-    product = Product(
+    try:
+        name = data.get("name")
+        category = data.get("category")
+        seller = data.get("seller")
+        price = float(data.get("price", 0))
+        unit = data.get("unit")
+        emoji = data.get("emoji", "🛒")
+        fresh = data.get("fresh", False)
 
-        name=data.get("name"),
+        if not name:
+            return jsonify({
+                "error": "Product name is required"
+            }), 400
 
-        category=data.get("category"),
+        if not category:
+            return jsonify({
+                "error": "Category is required"
+            }), 400
 
-        seller=data.get("seller"),
+        if not seller:
+            return jsonify({
+                "error": "Seller name is required"
+            }), 400
 
-        price=float(data.get("price", 0)),
+        if price <= 0:
+            return jsonify({
+                "error": "Price must be greater than 0"
+            }), 400
 
-        unit=data.get("unit"),
+        product = Product(
+            name=name,
+            category=category,
+            seller=seller,
+            price=price,
+            unit=unit,
+            emoji=emoji,
+            fresh=fresh
+        )
 
-        emoji=data.get("emoji", "🛒"),
+        db.session.add(product)
+        db.session.commit()
 
-        fresh=data.get("fresh", False)
+        return jsonify({
+            "message": "Product added successfully",
+            "product_id": product.id
+        }), 201
 
-    )
+    except Exception as error:
 
-    db.session.add(product)
+        db.session.rollback()
 
-    db.session.commit()
-
-    return jsonify({
-
-        "message": "Product added successfully",
-
-        "product_id": product.id
-
-    }), 201
+        return jsonify({
+            "error": str(error)
+        }), 500
 
 
 # ==========================================
@@ -233,59 +254,68 @@ def place_order():
                 "error": f"{field} is required"
             }), 400
 
-    order = Order(
+    try:
 
-        customer_name=data["customer_name"],
+        order = Order(
+            customer_name=data["customer_name"],
 
-        mobile=data["mobile"],
+            mobile=data["mobile"],
 
-        village=data["village"],
+            village=data["village"],
 
-        address=data["address"],
+            address=data["address"],
 
-        instructions=data.get(
-            "instructions",
-            ""
-        ),
+            instructions=data.get(
+                "instructions",
+                ""
+            ),
 
-        payment_method=data.get(
-            "payment_method",
-            "Cash on Delivery"
-        ),
+            payment_method=data.get(
+                "payment_method",
+                "Cash on Delivery"
+            ),
 
-        items=str(
-            data["items"]
-        ),
+            items=str(data["items"]),
 
-        subtotal=float(
-            data["subtotal"]
-        ),
+            subtotal=float(
+                data["subtotal"]
+            ),
 
-        delivery_fee=float(
-            data["delivery_fee"]
-        ),
+            delivery_fee=float(
+                data["delivery_fee"]
+            ),
 
-        total=float(
-            data["total"]
-        ),
+            total=float(
+                data["total"]
+            ),
 
-        status="Order Placed"
+            status="Order Placed"
+        )
 
-    )
+        db.session.add(order)
 
-    db.session.add(order)
+        db.session.commit()
 
-    db.session.commit()
+        return jsonify({
 
-    return jsonify({
+            "message":
+                "Order placed successfully",
 
-        "message": "Order placed successfully",
+            "order_id":
+                order.id,
 
-        "order_id": order.id,
+            "status":
+                order.status
 
-        "status": order.status
+        }), 201
 
-    }), 201
+    except Exception as error:
+
+        db.session.rollback()
+
+        return jsonify({
+            "error": str(error)
+        }), 500
 
 
 # ==========================================
@@ -305,7 +335,8 @@ def get_orders():
 
         result.append({
 
-            "id": order.id,
+            "id":
+                order.id,
 
             "customer_name":
                 order.customer_name,
@@ -342,10 +373,8 @@ def get_orders():
 
             "created_at":
                 order.created_at.isoformat()
-
-            if order.created_at
-            else None
-
+                if order.created_at
+                else None
         })
 
     return jsonify(result)
@@ -382,27 +411,31 @@ def update_order_status(order_id):
         "Delivered",
 
         "Cancelled"
-
     ]
 
     if new_status not in allowed_statuses:
 
         return jsonify({
 
-            "error": "Invalid order status",
+            "error":
+                "Invalid order status",
 
             "allowed_statuses":
                 allowed_statuses
 
         }), 400
 
-    order = Order.query.get(order_id)
+    order = db.session.get(
+        Order,
+        order_id
+    )
 
     if not order:
 
         return jsonify({
 
-            "error": "Order not found"
+            "error":
+                "Order not found"
 
         }), 404
 
@@ -425,17 +458,392 @@ def update_order_status(order_id):
 
 
 # ==========================================
-# RUN SERVER
+# ADD INITIAL PRODUCTS
+# ==========================================
+
+def add_initial_products():
+
+    if Product.query.count() > 0:
+        return
+
+    products = [
+
+        # ==============================
+        # VEGETABLES
+        # ==============================
+
+        {
+            "name": "Potato",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 40,
+            "unit": "kg",
+            "emoji": "🥔"
+        },
+
+        {
+            "name": "Tomato",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 35,
+            "unit": "kg",
+            "emoji": "🍅"
+        },
+
+        {
+            "name": "Onion",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 40,
+            "unit": "kg",
+            "emoji": "🧅"
+        },
+
+        {
+            "name": "Brinjal / Eggplant",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 45,
+            "unit": "kg",
+            "emoji": "🍆"
+        },
+
+        {
+            "name": "Okra / Lady's Finger",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 50,
+            "unit": "kg",
+            "emoji": "🌿"
+        },
+
+        {
+            "name": "Bitter Gourd",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 55,
+            "unit": "kg",
+            "emoji": "🥒"
+        },
+
+        {
+            "name": "Bottle Gourd",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 35,
+            "unit": "piece",
+            "emoji": "🥒"
+        },
+
+        {
+            "name": "Ridge Gourd",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 45,
+            "unit": "kg",
+            "emoji": "🥒"
+        },
+
+        {
+            "name": "Snake Gourd",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 40,
+            "unit": "kg",
+            "emoji": "🥒"
+        },
+
+        {
+            "name": "Cucumber",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 35,
+            "unit": "kg",
+            "emoji": "🥒"
+        },
+
+        {
+            "name": "Carrot",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 60,
+            "unit": "kg",
+            "emoji": "🥕"
+        },
+
+        {
+            "name": "Radish",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 35,
+            "unit": "kg",
+            "emoji": "🌱"
+        },
+
+        {
+            "name": "Cabbage",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 35,
+            "unit": "piece",
+            "emoji": "🥬"
+        },
+
+        {
+            "name": "Cauliflower",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 50,
+            "unit": "piece",
+            "emoji": "🥦"
+        },
+
+        {
+            "name": "Spinach",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 25,
+            "unit": "bunch",
+            "emoji": "🥬"
+        },
+
+        {
+            "name": "Coriander Leaves",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 20,
+            "unit": "bunch",
+            "emoji": "🌿"
+        },
+
+        {
+            "name": "Ivy Gourd",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 45,
+            "unit": "kg",
+            "emoji": "🥒"
+        },
+
+        {
+            "name": "Drumstick",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 60,
+            "unit": "kg",
+            "emoji": "🌿"
+        },
+
+        {
+            "name": "Cluster Beans",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 55,
+            "unit": "kg",
+            "emoji": "🌿"
+        },
+
+        {
+            "name": "Green Chili",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 80,
+            "unit": "kg",
+            "emoji": "🌶️"
+        },
+
+        {
+            "name": "Ginger",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 120,
+            "unit": "kg",
+            "emoji": "🫚"
+        },
+
+        {
+            "name": "Garlic",
+            "category": "Vegetables",
+            "seller": "Local Farmer",
+            "price": 160,
+            "unit": "kg",
+            "emoji": "🧄"
+        },
+
+
+        # ==============================
+        # FRUITS
+        # ==============================
+
+        {
+            "name": "Mango",
+            "category": "Fruits",
+            "seller": "Local Fruit Seller",
+            "price": 100,
+            "unit": "kg",
+            "emoji": "🥭"
+        },
+
+        {
+            "name": "Banana",
+            "category": "Fruits",
+            "seller": "Local Fruit Seller",
+            "price": 50,
+            "unit": "dozen",
+            "emoji": "🍌"
+        },
+
+        {
+            "name": "Apple",
+            "category": "Fruits",
+            "seller": "Local Fruit Seller",
+            "price": 150,
+            "unit": "kg",
+            "emoji": "🍎"
+        },
+
+        {
+            "name": "Guava",
+            "category": "Fruits",
+            "seller": "Local Fruit Seller",
+            "price": 70,
+            "unit": "kg",
+            "emoji": "🍐"
+        },
+
+        {
+            "name": "Papaya",
+            "category": "Fruits",
+            "seller": "Local Fruit Seller",
+            "price": 50,
+            "unit": "kg",
+            "emoji": "🍈"
+        },
+
+        {
+            "name": "Pomegranate",
+            "category": "Fruits",
+            "seller": "Local Fruit Seller",
+            "price": 180,
+            "unit": "kg",
+            "emoji": "🍎"
+        },
+
+        {
+            "name": "Watermelon",
+            "category": "Fruits",
+            "seller": "Local Fruit Seller",
+            "price": 35,
+            "unit": "kg",
+            "emoji": "🍉"
+        },
+
+        {
+            "name": "Grapes",
+            "category": "Fruits",
+            "seller": "Local Fruit Seller",
+            "price": 100,
+            "unit": "kg",
+            "emoji": "🍇"
+        },
+
+
+        # ==============================
+        # DAIRY PRODUCTS
+        # ==============================
+
+        {
+            "name": "Milk",
+            "category": "Dairy",
+            "seller": "Local Dairy",
+            "price": 60,
+            "unit": "litre",
+            "emoji": "🥛"
+        },
+
+        {
+            "name": "Curd / Yogurt",
+            "category": "Dairy",
+            "seller": "Local Dairy",
+            "price": 70,
+            "unit": "kg",
+            "emoji": "🥣"
+        },
+
+        {
+            "name": "Buttermilk",
+            "category": "Dairy",
+            "seller": "Local Dairy",
+            "price": 30,
+            "unit": "litre",
+            "emoji": "🥛"
+        },
+
+        {
+            "name": "Ghee",
+            "category": "Dairy",
+            "seller": "Local Dairy",
+            "price": 600,
+            "unit": "kg",
+            "emoji": "🧈"
+        },
+
+        {
+            "name": "Butter",
+            "category": "Dairy",
+            "seller": "Local Dairy",
+            "price": 550,
+            "unit": "kg",
+            "emoji": "🧈"
+        },
+
+        {
+            "name": "Cheese",
+            "category": "Dairy",
+            "seller": "Local Dairy",
+            "price": 400,
+            "unit": "kg",
+            "emoji": "🧀"
+        },
+
+        {
+            "name": "Coriander Seeds",
+            "category": "Groceries",
+            "seller": "Local Grocery Shop",
+            "price": 180,
+            "unit": "kg",
+            "emoji": "🌿"
+        }
+    ]
+
+    for item in products:
+
+        product = Product(
+            name=item["name"],
+            category=item["category"],
+            seller=item["seller"],
+            price=item["price"],
+            unit=item["unit"],
+            emoji=item["emoji"],
+            fresh=True
+        )
+
+        db.session.add(product)
+
+    db.session.commit()
+
+
+# ==========================================
+# START APPLICATION
 # ==========================================
 
 if __name__ == "__main__":
 
+    with app.app_context():
+        add_initial_products()
+
     app.run(
-
         host="127.0.0.1",
-
         port=5000,
-
         debug=True
-
     )
