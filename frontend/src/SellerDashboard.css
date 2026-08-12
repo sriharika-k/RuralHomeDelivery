@@ -1,0 +1,611 @@
+/* =========================================================
+   RURALHOME SELLER DASHBOARD
+   ========================================================= */
+
+.seller-dashboard {
+  min-height: 100vh;
+  background: #f5f7f3;
+  padding: 35px 6%;
+  color: #263326;
+}
+
+/* =========================================================
+   TOP BAR
+   ========================================================= */
+
+.seller-dashboard-topbar {
+  background: #ffffff;
+  padding: 14px 6%;
+  border-bottom: 1px solid #e3e8df;
+}
+
+.seller-back-button {
+  border: none;
+  background: #eef6eb;
+  color: #35733a;
+  padding: 11px 18px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.seller-back-button:hover {
+  background: #dcefd8;
+  transform: translateX(-2px);
+}
+
+/* =========================================================
+   DASHBOARD HEADER
+   ========================================================= */
+
+.seller-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.seller-label,
+.dashboard-section-label {
+  margin: 0 0 7px;
+  color: #5b8c55;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.seller-header h1 {
+  margin: 0;
+  font-size: 34px;
+  color: #243d27;
+}
+
+.seller-subtitle {
+  margin: 9px 0 0;
+  color: #718071;
+  font-size: 15px;
+}
+
+.refresh-button {
+  border: none;
+  background: #3f7d43;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.refresh-button:hover {
+  background: #326737;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+.dashboard-message {
+  padding: 13px 17px;
+  margin-bottom: 22px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dashboard-message.success {
+  background: #e8f6e6;
+  color: #347139;
+  border: 1px solid #cce8c8;
+}
+
+.dashboard-message.error {
+  background: #fff0ef;
+  color: #b33a35;
+  border: 1px solid #f2c9c5;
+}
+
+/* =========================================================
+   STATISTICS
+   ========================================================= */
+
+.seller-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 35px;
+}
+
+.seller-stat-card {
+  background: white;
+  border: 1px solid #e5eae2;
+  border-radius: 15px;
+  padding: 21px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 3px 12px rgba(45, 70, 45, 0.05);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: #edf6e9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.seller-stat-card span {
+  display: block;
+  color: #7b8679;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+.seller-stat-card strong {
+  display: block;
+  color: #29492c;
+  font-size: 24px;
+}
+
+/* =========================================================
+   SECTIONS
+   ========================================================= */
+
+.dashboard-section {
+  background: #ffffff;
+  border: 1px solid #e4e9e1;
+  border-radius: 16px;
+  padding: 27px;
+  margin-bottom: 30px;
+  box-shadow: 0 3px 14px rgba(45, 70, 45, 0.04);
+}
+
+.dashboard-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.dashboard-section-header h2 {
+  margin: 0;
+  font-size: 23px;
+  color: #29442c;
+}
+
+.add-product-button {
+  border: none;
+  background: #3f7d43;
+  color: white;
+  padding: 12px 19px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.add-product-button:hover {
+  background: #326737;
+}
+
+/* =========================================================
+   ADD PRODUCT FORM
+   ========================================================= */
+
+.add-product-form {
+  background: #f8faf7;
+  border: 1px solid #e0e8dd;
+  border-radius: 13px;
+  padding: 22px;
+  margin-bottom: 27px;
+}
+
+.add-product-form h3 {
+  margin: 0 0 20px;
+  color: #315c34;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 17px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 7px;
+  color: #4c5e4b;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 13px;
+  border: 1px solid #d6ded3;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #5b985c;
+  box-shadow: 0 0 0 3px rgba(91, 152, 92, 0.1);
+}
+
+.fresh-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 18px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4c5e4b;
+}
+
+.fresh-checkbox input {
+  width: 17px;
+  height: 17px;
+  accent-color: #438047;
+}
+
+.save-product-button {
+  border: none;
+  background: #438047;
+  color: white;
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.save-product-button:hover {
+  background: #326737;
+}
+
+/* =========================================================
+   PRODUCT GRID
+   ========================================================= */
+
+.seller-products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.seller-product-card {
+  border: 1px solid #e3e9e1;
+  border-radius: 13px;
+  overflow: hidden;
+  background: white;
+  transition: 0.2s;
+}
+
+.seller-product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(45, 70, 45, 0.08);
+}
+
+.seller-product-image {
+  height: 135px;
+  background: #f1f7ed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 60px;
+}
+
+.seller-product-info {
+  padding: 15px;
+}
+
+.seller-product-info h3 {
+  margin: 8px 0 5px;
+  font-size: 16px;
+  color: #2d442f;
+}
+
+.seller-product-info p {
+  margin: 0 0 6px;
+  color: #788277;
+  font-size: 13px;
+}
+
+.seller-name-small {
+  display: block;
+  color: #647361;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.seller-fresh-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #e6f4e2;
+  color: #3b793f;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.seller-product-price {
+  font-size: 19px;
+  font-weight: 800;
+  color: #2d6b34;
+}
+
+.seller-product-price span {
+  color: #7a8478;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* =========================================================
+   ORDERS
+   ========================================================= */
+
+.order-count {
+  background: #edf5e9;
+  color: #477447;
+  padding: 8px 13px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.orders-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 850px;
+}
+
+.orders-table th {
+  background: #f5f8f3;
+  color: #637060;
+  font-size: 12px;
+  text-align: left;
+  padding: 13px;
+  border-bottom: 1px solid #e1e7df;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.orders-table td {
+  padding: 15px 13px;
+  border-bottom: 1px solid #edf0eb;
+  font-size: 13px;
+  color: #4e5b4d;
+  vertical-align: middle;
+}
+
+.orders-table tbody tr:hover {
+  background: #fafcf9;
+}
+
+.order-items-cell {
+  max-width: 230px;
+  line-height: 1.5;
+}
+
+.order-status {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.status-pending {
+  background: #fff5d8;
+  color: #9a7117;
+}
+
+.status-processing {
+  background: #e9f1ff;
+  color: #426ba8;
+}
+
+.status-delivered,
+.status-completed {
+  background: #e5f5e3;
+  color: #37753b;
+}
+
+.status-cancelled {
+  background: #fde9e8;
+  color: #a33b37;
+}
+
+.status-select {
+  border: 1px solid #d6ded3;
+  border-radius: 7px;
+  padding: 7px 9px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+
+.status-select:focus {
+  border-color: #5b985c;
+}
+
+/* =========================================================
+   LOADING / EMPTY
+   ========================================================= */
+
+.dashboard-loading {
+  text-align: center;
+  padding: 50px 20px;
+  color: #738070;
+  font-size: 15px;
+}
+
+.dashboard-empty {
+  text-align: center;
+  padding: 45px 20px;
+  border: 1px dashed #d4ddd0;
+  border-radius: 12px;
+  background: #fafcf9;
+}
+
+.dashboard-empty > div {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+.dashboard-empty h3 {
+  margin: 0 0 7px;
+  color: #415341;
+}
+
+.dashboard-empty p {
+  margin: 0;
+  color: #7b8579;
+  font-size: 14px;
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.seller-dashboard-footer {
+  text-align: center;
+  padding: 25px 10px 5px;
+  color: #7c8779;
+  font-size: 13px;
+}
+
+.seller-dashboard-footer p {
+  margin: 0 0 5px;
+  font-weight: 700;
+  color: #4d704d;
+}
+
+.seller-dashboard-footer span {
+  font-size: 12px;
+}
+
+/* =========================================================
+   RESPONSIVE - TABLET
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .seller-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .seller-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+   ========================================================= */
+
+@media (max-width: 750px) {
+  .seller-dashboard {
+    padding: 25px 4%;
+  }
+
+  .seller-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .seller-header h1 {
+    font-size: 28px;
+  }
+
+  .refresh-button {
+    width: 100%;
+  }
+
+  .seller-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-section {
+    padding: 18px;
+  }
+
+  .dashboard-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .add-product-button {
+    width: 100%;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .seller-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* =========================================================
+   RESPONSIVE - SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .seller-dashboard {
+    padding: 20px 3%;
+  }
+
+  .seller-header h1 {
+    font-size: 24px;
+  }
+
+  .seller-subtitle {
+    font-size: 13px;
+  }
+
+  .seller-product-image {
+    height: 110px;
+    font-size: 48px;
+  }
+
+  .seller-products-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .seller-stat-card {
+    padding: 17px;
+  }
+
+  .seller-stat-card strong {
+    font-size: 21px;
+  }
+
+  .dashboard-section-header h2 {
+    font-size: 20px;
+  }
+}
