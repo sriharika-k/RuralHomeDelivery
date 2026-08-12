@@ -110,11 +110,11 @@ function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [sellerMode, setSellerMode] = useState(false);
 
-  // PIN LOCATION
   const [pinCode, setPinCode] = useState("");
   const [location, setLocation] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const [showPinSelector, setShowPinSelector] = useState(false);
+  const [coordinates, setCoordinates] = useState(null);
 
   const [customer, setCustomer] = useState({
     name: "",
@@ -136,7 +136,10 @@ function App() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState(null);
 
+  // =====================================================
   // LOAD PRODUCTS
+  // =====================================================
+
   useEffect(() => {
     loadProducts();
   }, []);
@@ -160,35 +163,74 @@ function App() {
       if (backendProducts.length > 0) {
         const formattedProducts = backendProducts.map(
           (product, index) => ({
-            id: product.id || product.product_id || index + 1,
-            name: product.name || "Unnamed Product",
-            category: product.category || "Groceries",
-            seller: product.seller || "Local Seller",
-            price: Number(product.price || 0),
-            unit: product.unit || "piece",
-            emoji: product.emoji || "📦",
-            fresh: product.fresh !== false,
+            id:
+              product.id ||
+              product.product_id ||
+              index + 1,
+
+            name:
+              product.name ||
+              "Unnamed Product",
+
+            category:
+              product.category ||
+              "Groceries",
+
+            seller:
+              product.seller ||
+              "Local Seller",
+
+            price:
+              Number(product.price || 0),
+
+            unit:
+              product.unit ||
+              "piece",
+
+            emoji:
+              product.emoji ||
+              "📦",
+
+            fresh:
+              product.fresh !== false,
           })
         );
 
         setProducts(formattedProducts);
       }
     } catch (error) {
-      console.error("Product loading error:", error);
+      console.error(
+        "Product loading error:",
+        error
+      );
     } finally {
       setProductsLoading(false);
     }
   };
 
-  // ==============================
-  // PIN CODE LOCATION DETECTION
-  // ==============================
+  // =====================================================
+  // UPDATE PIN
+  // =====================================================
+
+  const updatePinCode = (value) => {
+    const onlyNumbers = value
+      .replace(/\D/g, "")
+      .slice(0, 6);
+
+    setPinCode(onlyNumbers);
+  };
+
+  // =====================================================
+  // DETECT LOCATION USING PIN CODE
+  // =====================================================
 
   const detectLocationByPin = async () => {
     const cleanPin = pinCode.replace(/\D/g, "");
 
     if (cleanPin.length !== 6) {
-      alert("Please enter a valid 6-digit PIN code.");
+      alert(
+        "Please enter a valid 6-digit PIN code."
+      );
       return;
     }
 
@@ -200,7 +242,9 @@ function App() {
       );
 
       if (!response.ok) {
-        throw new Error("PIN API request failed");
+        throw new Error(
+          "PIN API request failed"
+        );
       }
 
       const data = await response.json();
@@ -226,7 +270,8 @@ function App() {
       const district = postOffice.District || "";
       const state = postOffice.State || "";
 
-      const detectedLocation = `${village}, ${district}, ${state}`;
+      const detectedLocation =
+        `${village}, ${district}, ${state}`;
 
       setLocation(detectedLocation);
 
@@ -237,28 +282,196 @@ function App() {
 
       setShowPinSelector(false);
 
-      alert(`Delivery location detected:\n${detectedLocation}`);
+      alert(
+        `Delivery location detected:\n\n${detectedLocation}\nPIN: ${cleanPin}`
+      );
     } catch (error) {
-      console.error("PIN location error:", error);
+      console.error(
+        "PIN location error:",
+        error
+      );
 
       setLocation("");
 
       alert(
-        "Invalid PIN code or location could not be found. Please check your 6-digit PIN code."
+        "Invalid PIN code or location could not be found."
       );
     } finally {
       setLocationLoading(false);
     }
   };
 
-  const updatePinCode = (value) => {
-    const onlyNumbers = value.replace(/\D/g, "").slice(0, 6);
-    setPinCode(onlyNumbers);
+  // =====================================================
+  // DETECT MY CURRENT LOCATION
+  // =====================================================
+
+  const detectMyLocation = () => {
+    if (!navigator.geolocation) {
+      alert(
+        "Location detection is not supported by your browser."
+      );
+      return;
+    }
+
+    setLocationLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const latitude =
+          position.coords.latitude;
+
+        const longitude =
+          position.coords.longitude;
+
+        setCoordinates({
+          latitude,
+          longitude,
+        });
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(
+              "Reverse location request failed"
+            );
+          }
+
+          const data = await response.json();
+          const address = data.address || {};
+
+          const detectedPin =
+            address.postcode || "";
+
+          const village =
+            address.village ||
+            address.town ||
+            address.city ||
+            address.municipality ||
+            address.suburb ||
+            "";
+
+          const district =
+            address.state_district ||
+            address.county ||
+            address.district ||
+            "";
+
+          const state =
+            address.state || "";
+
+          const locationParts = [
+            village,
+            district,
+            state,
+          ].filter(Boolean);
+
+          const detectedLocation =
+            locationParts.join(", ");
+
+          setLocation(
+            detectedLocation ||
+              "Current location detected"
+          );
+
+          if (detectedPin) {
+            setPinCode(
+              detectedPin
+                .replace(/\D/g, "")
+                .slice(0, 6)
+            );
+          }
+
+          setCustomer((current) => ({
+            ...current,
+            village:
+              detectedLocation ||
+              current.village,
+          }));
+
+          alert(
+            `Your location was detected!\n\n📍 ${
+              detectedLocation ||
+              "Current location"
+            }\n📮 PIN: ${
+              detectedPin ||
+              "Not available"
+            }`
+          );
+        } catch (error) {
+          console.error(
+            "Reverse geocoding error:",
+            error
+          );
+
+          setLocation(
+            `GPS Location (${latitude.toFixed(
+              5
+            )}, ${longitude.toFixed(5)})`
+          );
+
+          alert(
+            "GPS location detected, but the PIN code could not be obtained automatically. Please enter your PIN manually."
+          );
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+
+      (error) => {
+        console.error(
+          "GPS error:",
+          error
+        );
+
+        setLocationLoading(false);
+
+        if (
+          error.code ===
+          error.PERMISSION_DENIED
+        ) {
+          alert(
+            "Location permission was denied. Please allow location access in your browser."
+          );
+        } else if (
+          error.code ===
+          error.POSITION_UNAVAILABLE
+        ) {
+          alert(
+            "Your location is currently unavailable."
+          );
+        } else if (
+          error.code ===
+          error.TIMEOUT
+        ) {
+          alert(
+            "Location detection timed out. Please try again."
+          );
+        } else {
+          alert(
+            "Could not detect your location."
+          );
+        }
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
   };
 
-  // ==============================
+  // =====================================================
   // PRODUCTS
-  // ==============================
+  // =====================================================
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -266,35 +479,55 @@ function App() {
         selectedCategory === "All" ||
         product.category === selectedCategory;
 
-      const search = searchText.toLowerCase().trim();
+      const search =
+        searchText
+          .toLowerCase()
+          .trim();
 
       const matchesSearch =
-        product.name.toLowerCase().includes(search) ||
-        product.category.toLowerCase().includes(search) ||
-        product.seller.toLowerCase().includes(search);
+        product.name
+          .toLowerCase()
+          .includes(search) ||
+        product.category
+          .toLowerCase()
+          .includes(search) ||
+        product.seller
+          .toLowerCase()
+          .includes(search);
 
-      return matchesCategory && matchesSearch;
+      return (
+        matchesCategory &&
+        matchesSearch
+      );
     });
-  }, [products, selectedCategory, searchText]);
+  }, [
+    products,
+    selectedCategory,
+    searchText,
+  ]);
 
-  // ==============================
+  // =====================================================
   // CART
-  // ==============================
+  // =====================================================
 
   const addToCart = (product) => {
     setCart((currentCart) => {
-      const existingProduct = currentCart.find(
-        (item) => item.id === product.id
-      );
+      const existingProduct =
+        currentCart.find(
+          (item) =>
+            item.id === product.id
+        );
 
       if (existingProduct) {
-        return currentCart.map((item) =>
-          item.id === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + 1,
-              }
-            : item
+        return currentCart.map(
+          (item) =>
+            item.id === product.id
+              ? {
+                  ...item,
+                  quantity:
+                    item.quantity + 1,
+                }
+              : item
         );
       }
 
@@ -314,7 +547,8 @@ function App() {
         item.id === id
           ? {
               ...item,
-              quantity: item.quantity + 1,
+              quantity:
+                item.quantity + 1,
             }
           : item
       )
@@ -328,39 +562,53 @@ function App() {
           item.id === id
             ? {
                 ...item,
-                quantity: item.quantity - 1,
+                quantity:
+                  item.quantity - 1,
               }
             : item
         )
-        .filter((item) => item.quantity > 0)
+        .filter(
+          (item) => item.quantity > 0
+        )
     );
   };
 
   const removeFromCart = (id) => {
     setCart((currentCart) =>
-      currentCart.filter((item) => item.id !== id)
+      currentCart.filter(
+        (item) => item.id !== id
+      )
     );
   };
 
   const totalItems = cart.reduce(
-    (total, item) => total + item.quantity,
+    (total, item) =>
+      total + item.quantity,
     0
   );
 
   const subtotal = cart.reduce(
     (total, item) =>
-      total + Number(item.price) * item.quantity,
+      total +
+      Number(item.price) *
+        item.quantity,
     0
   );
 
-  const deliveryFee = subtotal > 0 ? 20 : 0;
-  const total = subtotal + deliveryFee;
+  const deliveryFee =
+    subtotal > 0 ? 20 : 0;
 
-  // ==============================
+  const total =
+    subtotal + deliveryFee;
+
+  // =====================================================
   // CUSTOMER DETAILS
-  // ==============================
+  // =====================================================
 
-  const updateCustomer = (field, value) => {
+  const updateCustomer = (
+    field,
+    value
+  ) => {
     setCustomer((current) => ({
       ...current,
       [field]: value,
@@ -368,7 +616,10 @@ function App() {
   };
 
   const updateMobile = (value) => {
-    const onlyNumbers = value.replace(/\D/g, "").slice(0, 10);
+    const onlyNumbers =
+      value
+        .replace(/\D/g, "")
+        .slice(0, 10);
 
     setCustomer((current) => ({
       ...current,
@@ -376,12 +627,15 @@ function App() {
     }));
   };
 
-  // ==============================
-  // CARD DETAILS
-  // ==============================
+  // =====================================================
+  // CARD
+  // =====================================================
 
   const updateCardNumber = (value) => {
-    const onlyNumbers = value.replace(/\D/g, "").slice(0, 16);
+    const onlyNumbers =
+      value
+        .replace(/\D/g, "")
+        .slice(0, 16);
 
     setCardDetails((current) => ({
       ...current,
@@ -390,7 +644,10 @@ function App() {
   };
 
   const updateExpiry = (value) => {
-    let cleanValue = value.replace(/\D/g, "").slice(0, 4);
+    let cleanValue =
+      value
+        .replace(/\D/g, "")
+        .slice(0, 4);
 
     if (cleanValue.length >= 3) {
       cleanValue =
@@ -406,7 +663,10 @@ function App() {
   };
 
   const updateCVV = (value) => {
-    const onlyNumbers = value.replace(/\D/g, "").slice(0, 3);
+    const onlyNumbers =
+      value
+        .replace(/\D/g, "")
+        .slice(0, 3);
 
     setCardDetails((current) => ({
       ...current,
@@ -414,9 +674,9 @@ function App() {
     }));
   };
 
-  // ==============================
+  // =====================================================
   // PLACE ORDER
-  // ==============================
+  // =====================================================
 
   const placeOrder = async (event) => {
     event.preventDefault();
@@ -427,68 +687,138 @@ function App() {
       !customer.village.trim() ||
       !customer.address.trim()
     ) {
-      alert("Please fill in all required delivery fields.");
+      alert(
+        "Please fill in all required delivery fields."
+      );
       return;
     }
 
-    if (!/^\d{10}$/.test(customer.mobile)) {
-      alert("Mobile number must contain exactly 10 digits.");
+    if (
+      !/^\d{10}$/.test(
+        customer.mobile
+      )
+    ) {
+      alert(
+        "Mobile number must contain exactly 10 digits."
+      );
+      return;
+    }
+
+    if (
+      !/^\d{6}$/.test(pinCode)
+    ) {
+      alert(
+        "Please enter a valid 6-digit PIN code."
+      );
       return;
     }
 
     if (cart.length === 0) {
-      alert("Your cart is empty.");
+      alert(
+        "Your cart is empty."
+      );
       return;
     }
 
-    if (paymentMethod === "card") {
+    if (
+      paymentMethod === "card"
+    ) {
       if (
         !cardDetails.name.trim() ||
-        !/^\d{16}$/.test(cardDetails.number) ||
-        !/^\d{2}\/\d{2}$/.test(cardDetails.expiry) ||
-        !/^\d{3}$/.test(cardDetails.cvv)
+        !/^\d{16}$/.test(
+          cardDetails.number
+        ) ||
+        !/^\d{2}\/\d{2}$/.test(
+          cardDetails.expiry
+        ) ||
+        !/^\d{3}$/.test(
+          cardDetails.cvv
+        )
       ) {
         alert(
-          "Please enter valid card details: 16-digit card number, MM/YY expiry and 3-digit CVV."
+          "Please enter valid card details."
         );
         return;
       }
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/orders`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          customer_name: customer.name,
-          mobile: customer.mobile,
-          village: customer.village,
-          pin_code: pinCode,
-          address: customer.address,
-          instructions: customer.instructions,
-          items: cart,
-          subtotal: subtotal,
-          delivery_fee: deliveryFee,
-          total: total,
-          status: "Pending",
-          payment_method:
-            paymentMethod === "cod"
-              ? "Cash on Delivery"
-              : paymentMethod === "upi"
-              ? "UPI"
-              : "Card",
-        }),
-      });
+      const response = await fetch(
+        `${API_URL}/api/orders`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            customer_name:
+              customer.name,
+
+            mobile:
+              customer.mobile,
+
+            village:
+              customer.village,
+
+            pin_code:
+              pinCode,
+
+            address:
+              customer.address,
+
+            instructions:
+              customer.instructions,
+
+            items: cart,
+
+            subtotal:
+              subtotal,
+
+            delivery_fee:
+              deliveryFee,
+
+            total:
+              total,
+
+            status:
+              "Pending",
+
+            payment_method:
+              paymentMethod === "cod"
+                ? "Cash on Delivery"
+                : paymentMethod === "upi"
+                ? "UPI"
+                : "Card",
+
+            latitude:
+              coordinates?.latitude ||
+              null,
+
+            longitude:
+              coordinates?.longitude ||
+              null,
+          }),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error("Order failed");
+        throw new Error(
+          "Order failed"
+        );
       }
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
-      setOrderId(data.order_id || data.id || null);
+      setOrderId(
+        data.order_id ||
+          data.id ||
+          null
+      );
+
       setOrderPlaced(true);
       setCart([]);
 
@@ -507,7 +837,13 @@ function App() {
     }
   };
 
-  const selectCategory = (category) => {
+  // =====================================================
+  // NAVIGATION
+  // =====================================================
+
+  const selectCategory = (
+    category
+  ) => {
     setSelectedCategory(category);
     setPage("home");
   };
@@ -518,22 +854,38 @@ function App() {
     loadProducts();
   };
 
+  // =====================================================
+  // UPI
+  // =====================================================
+
   const upiPaymentUrl =
-    `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
-    `&pn=${encodeURIComponent("RuralHome")}` +
-    `&am=${encodeURIComponent(total.toFixed(2))}` +
+    `upi://pay?pa=${encodeURIComponent(
+      UPI_ID
+    )}` +
+    `&pn=${encodeURIComponent(
+      "RuralHome"
+    )}` +
+    `&am=${encodeURIComponent(
+      total.toFixed(2)
+    )}` +
     `&cu=INR`;
+
+  // =====================================================
+  // RETURN
+  // =====================================================
 
   return (
     <div className="app">
 
-      {/* ================= SELLER ================= */}
+      {/* SELLER */}
 
       {sellerMode ? (
         <>
           <div className="seller-dashboard-topbar">
             <button
-              onClick={goToCustomerApp}
+              onClick={
+                goToCustomerApp
+              }
               className="seller-back-button"
             >
               ← Back to Customer App
@@ -544,14 +896,15 @@ function App() {
         </>
       ) : (
         <>
-
-          {/* ================= HEADER ================= */}
+          {/* HEADER */}
 
           <header className="header">
 
             <div
               className="logo"
-              onClick={() => setPage("home")}
+              onClick={() =>
+                setPage("home")
+              }
             >
               🌾 Rural
               <span>Home</span>
@@ -559,31 +912,49 @@ function App() {
 
             <button
               className="location-button"
-              onClick={() => setShowPinSelector(true)}
+              onClick={() =>
+                setShowPinSelector(
+                  true
+                )
+              }
             >
               📍{" "}
-              {location || "Enter your PIN code"}
+              {location ||
+                "Detect Location"}
+
+              {pinCode && (
+                <>
+                  {" "}
+                  • PIN {pinCode}
+                </>
+              )}
             </button>
 
             <div className="header-actions">
 
               <button
                 className="seller-button"
-                onClick={() => setSellerMode(true)}
+                onClick={() =>
+                  setSellerMode(true)
+                }
               >
                 🌾 Seller
               </button>
 
               <button
                 className="login-button"
-                onClick={() => setShowLogin(true)}
+                onClick={() =>
+                  setShowLogin(true)
+                }
               >
                 Login
               </button>
 
               <button
                 className="cart-button"
-                onClick={() => setPage("cart")}
+                onClick={() =>
+                  setPage("cart")
+                }
               >
                 🛒 Cart
 
@@ -597,12 +968,14 @@ function App() {
             </div>
           </header>
 
-          {/* ================= PIN MODAL ================= */}
+          {/* LOCATION MODAL */}
 
           {showPinSelector && (
             <div
               className="modal-overlay"
-              onClick={() => setShowPinSelector(false)}
+              onClick={() =>
+                setShowPinSelector(false)
+              }
             >
               <div
                 className="login-modal"
@@ -614,7 +987,9 @@ function App() {
                 <button
                   className="close-modal"
                   onClick={() =>
-                    setShowPinSelector(false)
+                    setShowPinSelector(
+                      false
+                    )
                   }
                 >
                   ✕
@@ -625,14 +1000,42 @@ function App() {
                 </div>
 
                 <h2>
-                  Enter Your PIN Code
+                  Delivery Location
                 </h2>
 
                 <p>
-                  Enter your 6-digit Indian PIN
-                  code to find your delivery
-                  location.
+                  Detect your current
+                  location automatically
+                  or enter your PIN code.
                 </p>
+
+                <button
+                  className="primary-button"
+                  onClick={
+                    detectMyLocation
+                  }
+                  disabled={
+                    locationLoading
+                  }
+                >
+                  {locationLoading
+                    ? "📍 Detecting..."
+                    : "📍 Detect My Location"}
+                </button>
+
+                <div
+                  style={{
+                    textAlign: "center",
+                    margin: "18px 0",
+                    fontWeight: "bold",
+                  }}
+                >
+                  OR
+                </div>
+
+                <label>
+                  Enter PIN Code
+                </label>
 
                 <input
                   type="text"
@@ -649,15 +1052,20 @@ function App() {
 
                 <button
                   className="primary-button"
-                  onClick={detectLocationByPin}
-                  disabled={locationLoading}
+                  onClick={
+                    detectLocationByPin
+                  }
+                  disabled={
+                    locationLoading
+                  }
                 >
                   {locationLoading
                     ? "Finding Location..."
-                    : "📍 Detect Location"}
+                    : "📮 Find Location by PIN"}
                 </button>
 
-                {location && (
+                {(location ||
+                  pinCode) && (
                   <div
                     style={{
                       marginTop: "20px",
@@ -670,9 +1078,33 @@ function App() {
                       Delivery Location
                     </strong>
 
-                    <p>
-                      📍 {location}
-                    </p>
+                    {location && (
+                      <p>
+                        📍 {location}
+                      </p>
+                    )}
+
+                    {pinCode && (
+                      <p>
+                        📮 PIN Code:{" "}
+                        <strong>
+                          {pinCode}
+                        </strong>
+                      </p>
+                    )}
+
+                    {coordinates && (
+                      <small>
+                        GPS:{" "}
+                        {coordinates.latitude.toFixed(
+                          5
+                        )}
+                        ,{" "}
+                        {coordinates.longitude.toFixed(
+                          5
+                        )}
+                      </small>
+                    )}
                   </div>
                 )}
 
@@ -680,7 +1112,7 @@ function App() {
             </div>
           )}
 
-          {/* ================= SUCCESS ================= */}
+          {/* SUCCESS */}
 
           {orderPlaced ? (
             <main className="success-page">
@@ -692,16 +1124,18 @@ function App() {
                 </div>
 
                 <h1>
-                  Order Placed Successfully!
+                  Order Placed
+                  Successfully!
                 </h1>
 
                 <p>
-                  Thank you, {customer.name}.
+                  Thank you,{" "}
+                  {customer.name}.
                 </p>
 
                 <p>
-                  Your order will be delivered
-                  to:
+                  Your order will be
+                  delivered to:
                 </p>
 
                 <div className="delivery-address">
@@ -722,15 +1156,18 @@ function App() {
 
                 {orderId && (
                   <div className="order-number">
-                    Order ID: RH{orderId}
+                    Order ID: RH
+                    {orderId}
                   </div>
                 )}
 
                 <button
                   className="primary-button"
                   onClick={() => {
+                    setOrderPlaced(
+                      false
+                    );
 
-                    setOrderPlaced(false);
                     setPage("home");
 
                     setCustomer({
@@ -743,7 +1180,7 @@ function App() {
 
                     setPinCode("");
                     setLocation("");
-
+                    setCoordinates(null);
                     setPaymentMethod("cod");
 
                     loadProducts();
@@ -757,24 +1194,30 @@ function App() {
 
           ) : page === "checkout" ? (
 
-            /* ================= CHECKOUT ================= */
+            /* CHECKOUT */
 
             <main className="checkout-page">
 
               <button
                 className="back-button"
-                onClick={() => setPage("cart")}
+                onClick={() =>
+                  setPage("cart")
+                }
               >
                 ← Back to Cart
               </button>
 
-              <h1>Checkout</h1>
+              <h1>
+                Checkout
+              </h1>
 
               <div className="checkout-layout">
 
                 <form
                   className="customer-form"
-                  onSubmit={placeOrder}
+                  onSubmit={
+                    placeOrder
+                  }
                 >
 
                   <h2>
@@ -782,9 +1225,10 @@ function App() {
                   </h2>
 
                   <p className="form-description">
-                    Enter your details so we
-                    can deliver your order
-                    to your home.
+                    Enter your details
+                    so we can deliver
+                    your order to your
+                    home.
                   </p>
 
                   <label>
@@ -793,7 +1237,9 @@ function App() {
 
                   <input
                     type="text"
-                    value={customer.name}
+                    value={
+                      customer.name
+                    }
                     onChange={(event) =>
                       updateCustomer(
                         "name",
@@ -810,7 +1256,9 @@ function App() {
 
                   <input
                     type="tel"
-                    value={customer.mobile}
+                    value={
+                      customer.mobile
+                    }
                     onChange={(event) =>
                       updateMobile(
                         event.target.value
@@ -836,7 +1284,6 @@ function App() {
                       gap: "10px",
                     }}
                   >
-
                     <input
                       type="text"
                       inputMode="numeric"
@@ -854,15 +1301,35 @@ function App() {
                     <button
                       type="button"
                       className="primary-button"
-                      onClick={detectLocationByPin}
-                      disabled={locationLoading}
+                      onClick={
+                        detectLocationByPin
+                      }
+                      disabled={
+                        locationLoading
+                      }
                     >
                       {locationLoading
                         ? "Finding..."
                         : "Detect"}
                     </button>
-
                   </div>
+
+                  <button
+                    type="button"
+                    className="primary-button"
+                    style={{
+                      marginTop: "10px",
+                    }}
+                    onClick={
+                      detectMyLocation
+                    }
+                    disabled={
+                      locationLoading
+                    }
+                  >
+                    📍 Detect My Current
+                    Location
+                  </button>
 
                   {location && (
                     <div
@@ -874,7 +1341,21 @@ function App() {
                         borderRadius: "8px",
                       }}
                     >
-                      📍 {location}
+                      <strong>
+                        📍 Delivery Location
+                      </strong>
+
+                      <p>
+                        {location}
+                      </p>
+
+                      <p>
+                        📮 PIN:{" "}
+                        <strong>
+                          {pinCode ||
+                            "Not detected"}
+                        </strong>
+                      </p>
                     </div>
                   )}
 
@@ -884,7 +1365,9 @@ function App() {
 
                   <input
                     type="text"
-                    value={customer.village}
+                    value={
+                      customer.village
+                    }
                     onChange={(event) =>
                       updateCustomer(
                         "village",
@@ -896,11 +1379,14 @@ function App() {
                   />
 
                   <label>
-                    House / Door Number & Address *
+                    House / Door Number &
+                    Address *
                   </label>
 
                   <textarea
-                    value={customer.address}
+                    value={
+                      customer.address
+                    }
                     onChange={(event) =>
                       updateCustomer(
                         "address",
@@ -917,7 +1403,9 @@ function App() {
                   </label>
 
                   <textarea
-                    value={customer.instructions}
+                    value={
+                      customer.instructions
+                    }
                     onChange={(event) =>
                       updateCustomer(
                         "instructions",
@@ -940,10 +1428,13 @@ function App() {
                       type="radio"
                       name="payment"
                       checked={
-                        paymentMethod === "cod"
+                        paymentMethod ===
+                        "cod"
                       }
                       onChange={() =>
-                        setPaymentMethod("cod")
+                        setPaymentMethod(
+                          "cod"
+                        )
                       }
                     />
 
@@ -953,8 +1444,8 @@ function App() {
                       </strong>
 
                       <p>
-                        Pay when your order
-                        arrives.
+                        Pay when your
+                        order arrives.
                       </p>
                     </div>
 
@@ -966,10 +1457,13 @@ function App() {
                       type="radio"
                       name="payment"
                       checked={
-                        paymentMethod === "upi"
+                        paymentMethod ===
+                        "upi"
                       }
                       onChange={() =>
-                        setPaymentMethod("upi")
+                        setPaymentMethod(
+                          "upi"
+                        )
                       }
                     />
 
@@ -979,15 +1473,16 @@ function App() {
                       </strong>
 
                       <p>
-                        Pay using Google Pay,
-                        PhonePe, Paytm or
+                        Pay using Google
+                        Pay, PhonePe or
                         another UPI app.
                       </p>
                     </div>
 
                   </div>
 
-                  {paymentMethod === "upi" && (
+                  {paymentMethod ===
+                    "upi" && (
                     <div className="upi-payment-box">
 
                       <h3>
@@ -995,14 +1490,17 @@ function App() {
                       </h3>
 
                       <p>
-                        Scan this QR code using
-                        your UPI application.
+                        Scan this QR code
+                        using your UPI
+                        application.
                       </p>
 
                       <div className="qr-container">
 
                         <QRCodeSVG
-                          value={upiPaymentUrl}
+                          value={
+                            upiPaymentUrl
+                          }
                           size={220}
                           level="H"
                         />
@@ -1024,7 +1522,9 @@ function App() {
                       </p>
 
                       <a
-                        href={upiPaymentUrl}
+                        href={
+                          upiPaymentUrl
+                        }
                         className="upi-open-button"
                       >
                         Open UPI App
@@ -1039,10 +1539,13 @@ function App() {
                       type="radio"
                       name="payment"
                       checked={
-                        paymentMethod === "card"
+                        paymentMethod ===
+                        "card"
                       }
                       onChange={() =>
-                        setPaymentMethod("card")
+                        setPaymentMethod(
+                          "card"
+                        )
                       }
                     />
 
@@ -1052,14 +1555,15 @@ function App() {
                       </strong>
 
                       <p>
-                        Enter card details for
-                        demo payment.
+                        Demo card
+                        payment.
                       </p>
                     </div>
 
                   </div>
 
-                  {paymentMethod === "card" && (
+                  {paymentMethod ===
+                    "card" && (
                     <div className="card-payment-box">
 
                       <h3>
@@ -1072,12 +1576,15 @@ function App() {
 
                       <input
                         type="text"
-                        value={cardDetails.name}
+                        value={
+                          cardDetails.name
+                        }
                         onChange={(event) =>
                           setCardDetails(
                             (current) => ({
                               ...current,
-                              name: event.target.value,
+                              name: event.target
+                                .value,
                             })
                           )
                         }
@@ -1090,7 +1597,9 @@ function App() {
 
                       <input
                         type="text"
-                        value={cardDetails.number}
+                        value={
+                          cardDetails.number
+                        }
                         onChange={(event) =>
                           updateCardNumber(
                             event.target.value
@@ -1133,7 +1642,9 @@ function App() {
 
                           <input
                             type="password"
-                            value={cardDetails.cvv}
+                            value={
+                              cardDetails.cvv
+                            }
                             onChange={(event) =>
                               updateCVV(
                                 event.target.value
@@ -1149,8 +1660,9 @@ function App() {
                       </div>
 
                       <small>
-                        Demo only. Card details are
-                        not sent to the RuralHome
+                        Demo only. Card
+                        details are not
+                        sent to the RuralHome
                         backend.
                       </small>
 
@@ -1161,12 +1673,13 @@ function App() {
                     className="place-order-button"
                     type="submit"
                   >
-                    Place Order • ₹{total}
+                    Place Order • ₹
+                    {total}
                   </button>
 
                 </form>
 
-                {/* CHECKOUT SUMMARY */}
+                {/* SUMMARY */}
 
                 <div className="checkout-summary">
 
@@ -1247,13 +1760,15 @@ function App() {
 
           ) : page === "cart" ? (
 
-            /* ================= CART ================= */
+            /* CART */
 
             <main className="cart-page">
 
               <button
                 className="back-button"
-                onClick={() => setPage("home")}
+                onClick={() =>
+                  setPage("home")
+                }
               >
                 ← Continue Shopping
               </button>
@@ -1319,7 +1834,8 @@ function App() {
                           </p>
 
                           <strong>
-                            ₹{item.price} /{" "}
+                            ₹{item.price} /
+                            {" "}
                             {item.unit}
                           </strong>
 
@@ -1383,7 +1899,6 @@ function App() {
                     </h2>
 
                     <div className="summary-line">
-
                       <span>
                         Items
                       </span>
@@ -1391,11 +1906,9 @@ function App() {
                       <span>
                         {totalItems}
                       </span>
-
                     </div>
 
                     <div className="summary-line">
-
                       <span>
                         Subtotal
                       </span>
@@ -1403,11 +1916,9 @@ function App() {
                       <span>
                         ₹{subtotal}
                       </span>
-
                     </div>
 
                     <div className="summary-line">
-
                       <span>
                         Delivery
                       </span>
@@ -1415,13 +1926,11 @@ function App() {
                       <span>
                         ₹{deliveryFee}
                       </span>
-
                     </div>
 
                     <hr />
 
                     <div className="summary-total">
-
                       <span>
                         Total
                       </span>
@@ -1429,28 +1938,31 @@ function App() {
                       <strong>
                         ₹{total}
                       </strong>
-
                     </div>
 
                     <button
                       className="checkout-button"
                       onClick={() =>
-                        setPage("checkout")
+                        setPage(
+                          "checkout"
+                        )
                       }
                     >
-                      Proceed to Checkout →
+                      Proceed to
+                      Checkout →
                     </button>
 
                   </div>
 
                 </div>
+
               )}
 
             </main>
 
           ) : (
 
-            /* ================= HOME ================= */
+            /* HOME */
 
             <>
 
@@ -1464,11 +1976,13 @@ function App() {
                   </div>
 
                   <h1>
-                    Fresh & Essential Items
+                    Fresh & Essential
+                    Items
                     <br />
 
                     <span>
-                      Delivered to Your Home
+                      Delivered to Your
+                      Home
                     </span>
                   </h1>
 
@@ -1484,7 +1998,9 @@ function App() {
 
                     <input
                       type="text"
-                      value={searchText}
+                      value={
+                        searchText
+                      }
                       onChange={(event) =>
                         setSearchText(
                           event.target.value
@@ -1502,13 +2018,11 @@ function App() {
                 </div>
 
                 <div className="hero-vegetables">
-
                   <div>🥕</div>
                   <div>🍅</div>
                   <div>🥦</div>
                   <div>🥔</div>
                   <div>🍎</div>
-
                 </div>
 
               </section>
@@ -1545,7 +2059,9 @@ function App() {
                             ? "category-card active"
                             : "category-card"
                         }
-                        key={category.name}
+                        key={
+                          category.name
+                        }
                         onClick={() =>
                           selectCategory(
                             category.name
@@ -1579,7 +2095,8 @@ function App() {
                   <div>
 
                     <p className="section-label">
-                      FRESH FROM LOCAL SELLERS
+                      FRESH FROM LOCAL
+                      SELLERS
                     </p>
 
                     <h2>
@@ -1592,11 +2109,9 @@ function App() {
                   </div>
 
                   <span className="product-count">
-
                     {productsLoading
                       ? "Loading..."
                       : `${filteredProducts.length} products`}
-
                   </span>
 
                 </div>
@@ -1607,15 +2122,17 @@ function App() {
 
                     <div className="no-products">
 
-                      <div>⏳</div>
+                      <div>
+                        ⏳
+                      </div>
 
                       <h3>
                         Loading products...
                       </h3>
 
                       <p>
-                        Getting products from
-                        local sellers.
+                        Getting products
+                        from local sellers.
                       </p>
 
                     </div>
@@ -1625,15 +2142,17 @@ function App() {
 
                     <div className="no-products">
 
-                      <div>🔍</div>
+                      <div>
+                        🔍
+                      </div>
 
                       <h3>
                         No products found
                       </h3>
 
                       <p>
-                        Try another search or
-                        category.
+                        Try another search
+                        or category.
                       </p>
 
                     </div>
@@ -1645,7 +2164,9 @@ function App() {
 
                         <div
                           className="product-card"
-                          key={product.id}
+                          key={
+                            product.id
+                          }
                         >
 
                           {product.fresh && (
@@ -1661,29 +2182,41 @@ function App() {
                           <div className="product-info">
 
                             <p className="seller-name">
-                              {product.seller}
+                              {
+                                product.seller
+                              }
                             </p>
 
                             <h3>
-                              {product.name}
+                              {
+                                product.name
+                              }
                             </h3>
 
                             <p className="unit-text">
-                              {product.category} •{" "}
-                              {product.unit}
+                              {
+                                product.category
+                              }{" "}
+                              •{" "}
+                              {
+                                product.unit
+                              }
                             </p>
 
                             <div className="product-bottom">
 
                               <div className="price">
-
-                                ₹{product.price}
+                                ₹
+                                {
+                                  product.price
+                                }
 
                                 <span>
                                   /{" "}
-                                  {product.unit}
+                                  {
+                                    product.unit
+                                  }
                                 </span>
-
                               </div>
 
                               <button
@@ -1723,8 +2256,9 @@ function App() {
                   </p>
 
                   <h2>
-                    Bringing the local market
-                    closer to your home.
+                    Bringing the local
+                    market closer to your
+                    home.
                   </h2>
 
                   <p>
@@ -1741,7 +2275,9 @@ function App() {
 
                     <div>
 
-                      <span>🥬</span>
+                      <span>
+                        🥬
+                      </span>
 
                       <div>
 
@@ -1750,9 +2286,9 @@ function App() {
                         </h3>
 
                         <p>
-                          Fresh vegetables and
-                          farm products from
-                          local sellers.
+                          Fresh vegetables
+                          and farm products
+                          from local sellers.
                         </p>
 
                       </div>
@@ -1761,18 +2297,22 @@ function App() {
 
                     <div>
 
-                      <span>🏪</span>
+                      <span>
+                        🏪
+                      </span>
 
                       <div>
 
                         <h3>
-                          Support Local Sellers
+                          Support Local
+                          Sellers
                         </h3>
 
                         <p>
                           Help local farmers
-                          and small shops reach
-                          more customers.
+                          and small shops
+                          reach more
+                          customers.
                         </p>
 
                       </div>
@@ -1781,7 +2321,9 @@ function App() {
 
                     <div>
 
-                      <span>🏠</span>
+                      <span>
+                        🏠
+                      </span>
 
                       <div>
 
@@ -1790,9 +2332,10 @@ function App() {
                         </h3>
 
                         <p>
-                          Order from home and
-                          receive products at
-                          your doorstep.
+                          Order from home
+                          and receive
+                          products at your
+                          doorstep.
                         </p>
 
                       </div>
@@ -1814,12 +2357,10 @@ function App() {
           <footer>
 
             <div className="footer-logo">
-
               🌾 Rural
               <span>
                 Home
               </span>
-
             </div>
 
             <p>
