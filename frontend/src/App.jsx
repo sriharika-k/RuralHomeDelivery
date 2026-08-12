@@ -1874,14 +1874,21 @@ function App() {
                     🔍
                   </div>
 
-                  <h3>
-                    No products found
-                  </h3>
+                  <h3>Item not available</h3>
 
-                  <p>
-                    Try another search
-                    or category.
-                  </p>
+<p>
+  Sorry, this item is not currently available.
+</p>
+
+<button
+  className="primary-button"
+  onClick={() => {
+    setSearchText("");
+    setSelectedCategory("All");
+  }}
+>
+  View All Products
+</button>
 
                 </div>
 
