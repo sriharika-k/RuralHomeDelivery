@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -13,7 +14,9 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///ruralhome.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
-CORS(app)
+
+# Restrict CORS to the GitHub Pages origin (and allow local dev if needed)
+CORS(app, resources={r"/*": {"origins": ["https://sriharika-k.github.io"]}})
 
 
 # ==========================================
@@ -103,6 +106,11 @@ class Order(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+
+    # New fields for location data
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    pin_code = db.Column(db.String(20), nullable=True)
 
 
 # ==========================================
@@ -255,6 +263,10 @@ def place_order():
             }), 400
 
     try:
+        # optional location values
+        latitude = data.get("latitude")
+        longitude = data.get("longitude")
+        pin_code = data.get("pin_code") or data.get("pincode") or data.get("pin")
 
         order = Order(
             customer_name=data["customer_name"],
@@ -289,7 +301,11 @@ def place_order():
                 data["total"]
             ),
 
-            status="Order Placed"
+            status="Order Placed",
+
+            latitude=float(latitude) if latitude not in (None, "") else None,
+            longitude=float(longitude) if longitude not in (None, "") else None,
+            pin_code=str(pin_code) if pin_code not in (None, "") else None
         )
 
         db.session.add(order)
@@ -374,7 +390,11 @@ def get_orders():
             "created_at":
                 order.created_at.isoformat()
                 if order.created_at
-                else None
+                else None,
+
+            "latitude": order.latitude,
+            "longitude": order.longitude,
+            "pin_code": order.pin_code
         })
 
     return jsonify(result)
@@ -410,7 +430,11 @@ def update_order_status(order_id):
 
         "Delivered",
 
-        "Cancelled"
+        "Cancelled",
+
+        # also accept frontend labels
+        "Pending",
+        "Processing"
     ]
 
     if new_status not in allowed_statuses:
@@ -842,8 +866,9 @@ if __name__ == "__main__":
     with app.app_context():
         add_initial_products()
 
+    port = int(os.environ.get("PORT", 5000))
     app.run(
-        host="127.0.0.1",
-        port=5000,
-        debug=True
+        host="0.0.0.0",
+        port=port,
+        debug=False
     )
