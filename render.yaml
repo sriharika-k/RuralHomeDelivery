@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: rural-home-delivery-backend
+    env: python
+    root: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app

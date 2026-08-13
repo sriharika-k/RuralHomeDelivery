@@ -1,0 +1,33 @@
+# Python virtual environment
+backend/venv/
+venv/
+.env
+*.pyc
+__pycache__/
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Build files
+dist/
+build/
+
+# Environment files
+frontend/.env
+backend/.env
+
+# Python cache
+*.pyo
+*.pyd
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backend local files
+backend/instance/
