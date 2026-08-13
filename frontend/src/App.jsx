@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import "./App.css";
 import SellerDashboard from "./SellerDashboard";
-
-const API_URL = "http://127.0.0.1:5000";
+import API_BASE from "./api";
 const UPI_ID = "sriharika-k@upi";
 
 const defaultProducts = [
@@ -146,7 +145,7 @@ function App() {
 
   const loadProducts = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/products`);
+      const response = await fetch(`${API_BASE}/api/products`);
 
       if (!response.ok) {
         throw new Error("Could not load products");
@@ -262,9 +261,7 @@ function App() {
 
       setLocation("");
 
-      alert(
-        "Invalid PIN code or location could not be found."
-      );
+      alert("Invalid PIN code or location could not be found.");
     } finally {
       setLocationLoading(false);
     }
@@ -276,9 +273,7 @@ function App() {
 
   const detectMyLocation = () => {
     if (!navigator.geolocation) {
-      alert(
-        "Location detection is not supported by your browser."
-      );
+      alert("Location detection is not supported by your browser.");
       return;
     }
 
@@ -300,9 +295,7 @@ function App() {
           );
 
           if (!response.ok) {
-            throw new Error(
-              "Reverse location request failed"
-            );
+            throw new Error("Reverse location request failed");
           }
 
           const data = await response.json();
@@ -332,42 +325,27 @@ function App() {
             state,
           ].filter(Boolean);
 
-          const detectedLocation =
-            locationParts.join(", ");
+          const detectedLocation = locationParts.join(", ");
 
-          setLocation(
-            detectedLocation || "Current location detected"
-          );
+          setLocation(detectedLocation || "Current location detected");
 
           if (detectedPin) {
-            setPinCode(
-              detectedPin
-                .replace(/\D/g, "")
-                .slice(0, 6)
-            );
+            setPinCode(detectedPin.replace(/\D/g, "").slice(0, 6));
           }
 
           setCustomer((current) => ({
             ...current,
-            village:
-              detectedLocation || current.village,
+            village: detectedLocation || current.village,
           }));
 
           alert(
-            `Your location was detected!\n\n📍 ${
-              detectedLocation || "Current location"
-            }\n📮 PIN: ${detectedPin || "Not available"}`
+            `Your location was detected!\n\n📍 ${detectedLocation || "Current location"}\n📮 PIN: ${detectedPin || "Not available"}`
           );
         } catch (error) {
-          console.error(
-            "Reverse geocoding error:",
-            error
-          );
+          console.error("Reverse geocoding error:", error);
 
           setLocation(
-            `GPS Location (${latitude.toFixed(
-              5
-            )}, ${longitude.toFixed(5)})`
+            `GPS Location (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`
           );
 
           alert(
@@ -383,19 +361,11 @@ function App() {
         setLocationLoading(false);
 
         if (error.code === error.PERMISSION_DENIED) {
-          alert(
-            "Location permission was denied. Please allow location access in your browser."
-          );
-        } else if (
-          error.code === error.POSITION_UNAVAILABLE
-        ) {
-          alert(
-            "Your location is currently unavailable."
-          );
+          alert("Location permission was denied. Please allow location access in your browser.");
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          alert("Your location is currently unavailable.");
         } else if (error.code === error.TIMEOUT) {
-          alert(
-            "Location detection timed out. Please try again."
-          );
+          alert("Location detection timed out. Please try again.");
         } else {
           alert("Could not detect your location.");
         }
@@ -417,8 +387,7 @@ function App() {
 
     return products.filter((product) => {
       const matchesCategory =
-        selectedCategory === "All" ||
-        product.category === selectedCategory;
+        selectedCategory === "All" || product.category === selectedCategory;
 
       const matchesSearch =
         product.name.toLowerCase().includes(search) ||
@@ -435,18 +404,11 @@ function App() {
 
   const addToCart = (product) => {
     setCart((currentCart) => {
-      const existingProduct = currentCart.find(
-        (item) => item.id === product.id
-      );
+      const existingProduct = currentCart.find((item) => item.id === product.id);
 
       if (existingProduct) {
         return currentCart.map((item) =>
-          item.id === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + 1,
-              }
-            : item
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
 
@@ -462,48 +424,25 @@ function App() {
 
   const increaseQuantity = (id) => {
     setCart((currentCart) =>
-      currentCart.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              quantity: item.quantity + 1,
-            }
-          : item
-      )
+      currentCart.map((item) => (item.id === id ? { ...item, quantity: item.quantity + 1 } : item))
     );
   };
 
   const decreaseQuantity = (id) => {
     setCart((currentCart) =>
       currentCart
-        .map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                quantity: item.quantity - 1,
-              }
-            : item
-        )
+        .map((item) => (item.id === id ? { ...item, quantity: item.quantity - 1 } : item))
         .filter((item) => item.quantity > 0)
     );
   };
 
   const removeFromCart = (id) => {
-    setCart((currentCart) =>
-      currentCart.filter((item) => item.id !== id)
-    );
+    setCart((currentCart) => currentCart.filter((item) => item.id !== id));
   };
 
-  const totalItems = cart.reduce(
-    (total, item) => total + item.quantity,
-    0
-  );
+  const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
 
-  const subtotal = cart.reduce(
-    (total, item) =>
-      total + Number(item.price) * item.quantity,
-    0
-  );
+  const subtotal = cart.reduce((total, item) => total + Number(item.price) * item.quantity, 0);
 
   const deliveryFee = subtotal > 0 ? 20 : 0;
 
@@ -521,9 +460,7 @@ function App() {
   };
 
   const updateMobile = (value) => {
-    const onlyNumbers = value
-      .replace(/\D/g, "")
-      .slice(0, 10);
+    const onlyNumbers = value.replace(/\D/g, "").slice(0, 10);
 
     setCustomer((current) => ({
       ...current,
@@ -536,9 +473,7 @@ function App() {
   // =====================================================
 
   const updateCardNumber = (value) => {
-    const onlyNumbers = value
-      .replace(/\D/g, "")
-      .slice(0, 16);
+    const onlyNumbers = value.replace(/\D/g, "").slice(0, 16);
 
     setCardDetails((current) => ({
       ...current,
@@ -547,15 +482,10 @@ function App() {
   };
 
   const updateExpiry = (value) => {
-    let cleanValue = value
-      .replace(/\D/g, "")
-      .slice(0, 4);
+    let cleanValue = value.replace(/\D/g, "").slice(0, 4);
 
     if (cleanValue.length >= 3) {
-      cleanValue =
-        cleanValue.substring(0, 2) +
-        "/" +
-        cleanValue.substring(2);
+      cleanValue = cleanValue.substring(0, 2) + "/" + cleanValue.substring(2);
     }
 
     setCardDetails((current) => ({
@@ -565,9 +495,7 @@ function App() {
   };
 
   const updateCVV = (value) => {
-    const onlyNumbers = value
-      .replace(/\D/g, "")
-      .slice(0, 3);
+    const onlyNumbers = value.replace(/\D/g, "").slice(0, 3);
 
     setCardDetails((current) => ({
       ...current,
@@ -582,29 +510,18 @@ function App() {
   const placeOrder = async (event) => {
     event.preventDefault();
 
-    if (
-      !customer.name.trim() ||
-      !customer.mobile ||
-      !customer.village.trim() ||
-      !customer.address.trim()
-    ) {
-      alert(
-        "Please fill in all required delivery fields."
-      );
+    if (!customer.name.trim() || !customer.mobile || !customer.village.trim() || !customer.address.trim()) {
+      alert("Please fill in all required delivery fields.");
       return;
     }
 
     if (!/^\d{10}$/.test(customer.mobile)) {
-      alert(
-        "Mobile number must contain exactly 10 digits."
-      );
+      alert("Mobile number must contain exactly 10 digits.");
       return;
     }
 
     if (!/^\d{6}$/.test(pinCode)) {
-      alert(
-        "Please enter a valid 6-digit PIN code."
-      );
+      alert("Please enter a valid 6-digit PIN code.");
       return;
     }
 
@@ -627,32 +544,27 @@ function App() {
     }
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/orders`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            customer_name: customer.name,
-            mobile: customer.mobile,
-            village: customer.village,
-            address: customer.address,
-            instructions: customer.instructions,
-            items: cart,
-            subtotal: subtotal,
-            delivery_fee: deliveryFee,
-            total: total,
-            payment_method:
-              paymentMethod === "cod"
-                ? "Cash on Delivery"
-                : paymentMethod === "upi"
-                ? "UPI"
-                : "Card",
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE}/api/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customer_name: customer.name,
+          mobile: customer.mobile,
+          village: customer.village,
+          address: customer.address,
+          instructions: customer.instructions,
+          items: cart,
+          subtotal: subtotal,
+          delivery_fee: deliveryFee,
+          total: total,
+          payment_method: paymentMethod === "cod" ? "Cash on Delivery" : paymentMethod === "upi" ? "UPI" : "Card",
+          latitude: coordinates?.latitude ?? null,
+          longitude: coordinates?.longitude ?? null,
+          pin_code: pinCode || null,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error("Order failed");
@@ -660,9 +572,7 @@ function App() {
 
       const data = await response.json();
 
-      setOrderId(
-        data.order_id ?? data.id ?? null
-      );
+      setOrderId(data.order_id ?? data.id ?? null);
 
       setOrderPlaced(true);
       setCart([]);
@@ -676,9 +586,7 @@ function App() {
     } catch (error) {
       console.error("Order error:", error);
 
-      alert(
-        "Order could not be connected to the backend. Please make sure Flask is running."
-      );
+      alert("Order could not be connected to the backend. Please make sure Flask is running.");
     }
   };
 
@@ -701,11 +609,7 @@ function App() {
   // UPI
   // =====================================================
 
-  const upiPaymentUrl =
-    `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
-    `&pn=${encodeURIComponent("RuralHome")}` +
-    `&am=${encodeURIComponent(total.toFixed(2))}` +
-    `&cu=INR`;
+  const upiPaymentUrl = `upi://pay?pa=${encodeURIComponent(UPI_ID)}` + `&pn=${encodeURIComponent("RuralHome")}` + `&am=${encodeURIComponent(total.toFixed(2))}` + `&cu=INR`;
 
   // =====================================================
   // SELLER MODE
@@ -715,10 +619,7 @@ function App() {
     return (
       <div className="app">
         <div className="seller-dashboard-topbar">
-          <button
-            onClick={goToCustomerApp}
-            className="seller-back-button"
-          >
+          <button onClick={goToCustomerApp} className="seller-back-button">
             ← Back to Customer App
           </button>
         </div>
@@ -738,18 +639,9 @@ function App() {
       {/* HEADER */}
 
       <header className="header">
-        <div
-          className="logo"
-          onClick={() => setPage("home")}
-        >
-          🌾 Rural
-          <span>Home</span>
-        </div>
+        <div className="logo" onClick={() => setPage("home")}>🌾 Rural<span>Home</span></div>
 
-        <button
-          className="location-button"
-          onClick={() => setShowPinSelector(true)}
-        >
+        <button className="location-button" onClick={() => setShowPinSelector(true)}>
           📍 {location || "Detect Location"}
 
           {pinCode && (
@@ -762,31 +654,14 @@ function App() {
 
         <div className="header-actions">
 
-          <button
-            className="seller-button"
-            onClick={() => setSellerMode(true)}
-          >
-            🌾 Seller
-          </button>
+          <button className="seller-button" onClick={() => setSellerMode(true)}>🌾 Seller</button>
 
-          <button
-            className="login-button"
-            onClick={() => setShowLogin(true)}
-          >
-            Login
-          </button>
+          <button className="login-button" onClick={() => setShowLogin(true)}>Login</button>
 
-          <button
-            className="cart-button"
-            onClick={() => setPage("cart")}
-          >
-            🛒 Cart
+          <button className="cart-button" onClick={() => setPage("cart")}>🛒 Cart
 
-            {totalItems > 0 && (
-              <span className="cart-count">
-                {totalItems}
-              </span>
-            )}
+            {totalItems > 0 && <span className="cart-count">{totalItems}</span>}
+
           </button>
 
         </div>
@@ -795,115 +670,38 @@ function App() {
       {/* LOCATION MODAL */}
 
       {showPinSelector && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowPinSelector(false)}
-        >
-          <div
-            className="login-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-            <button
-              className="close-modal"
-              onClick={() =>
-                setShowPinSelector(false)
-              }
-            >
-              ✕
-            </button>
+        <div className="modal-overlay" onClick={() => setShowPinSelector(false)}>
+          <div className="login-modal" onClick={(event) => event.stopPropagation()}>
+            <button className="close-modal" onClick={() => setShowPinSelector(false)}>✕</button>
 
-            <div className="login-icon">
-              📍
-            </div>
+            <div className="login-icon">📍</div>
 
             <h2>Delivery Location</h2>
 
-            <p>
-              Detect your current location
-              automatically or enter your PIN code.
-            </p>
+            <p>Detect your current location automatically or enter your PIN code.</p>
 
-            <button
-              className="primary-button"
-              onClick={detectMyLocation}
-              disabled={locationLoading}
-            >
-              {locationLoading
-                ? "📍 Detecting..."
-                : "📍 Detect My Location"}
+            <button className="primary-button" onClick={detectMyLocation} disabled={locationLoading}>
+              {locationLoading ? "📍 Detecting..." : "📍 Detect My Location"}
             </button>
 
-            <div
-              style={{
-                textAlign: "center",
-                margin: "18px 0",
-                fontWeight: "bold",
-              }}
-            >
-              OR
-            </div>
+            <div style={{ textAlign: "center", margin: "18px 0", fontWeight: "bold" }}>OR</div>
 
             <label>Enter PIN Code</label>
 
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength="6"
-              value={pinCode}
-              onChange={(event) =>
-                updatePinCode(event.target.value)
-              }
-              placeholder="Enter 6-digit PIN code"
-            />
+            <input type="text" inputMode="numeric" maxLength="6" value={pinCode} onChange={(event) => updatePinCode(event.target.value)} placeholder="Enter 6-digit PIN code" />
 
-            <button
-              className="primary-button"
-              onClick={detectLocationByPin}
-              disabled={locationLoading}
-            >
-              {locationLoading
-                ? "Finding Location..."
-                : "📮 Find Location by PIN"}
-            </button>
+            <button className="primary-button" onClick={detectLocationByPin} disabled={locationLoading}>{locationLoading ? "Finding Location..." : "📮 Find Location by PIN"}</button>
 
             {(location || pinCode) && (
-              <div
-                style={{
-                  marginTop: "20px",
-                  padding: "15px",
-                  background: "#f1f8e9",
-                  borderRadius: "10px",
-                }}
-              >
-                <strong>
-                  Delivery Location
-                </strong>
+              <div style={{ marginTop: "20px", padding: "15px", background: "#f1f8e9", borderRadius: "10px" }}>
+                <strong>Delivery Location</strong>
 
-                {location && (
-                  <p>
-                    📍 {location}
-                  </p>
-                )}
+                {location && <p>📍 {location}</p>}
 
-                {pinCode && (
-                  <p>
-                    📮 PIN Code:{" "}
-                    <strong>
-                      {pinCode}
-                    </strong>
-                  </p>
-                )}
+                {pinCode && (<p>📮 PIN Code: <strong>{pinCode}</strong></p>)}
 
-                {coordinates && (
-                  <small>
-                    GPS:{" "}
-                    {coordinates.latitude.toFixed(5)}
-                    ,{" "}
-                    {coordinates.longitude.toFixed(5)}
-                  </small>
-                )}
+                {coordinates && (<small>GPS: {coordinates.latitude.toFixed(5)}, {coordinates.longitude.toFixed(5)}</small>)}
+
               </div>
             )}
           </div>
@@ -916,27 +714,16 @@ function App() {
         <main className="success-page">
           <div className="success-card">
 
-            <div className="success-icon">
-              ✓
-            </div>
+            <div className="success-icon">✓</div>
 
-            <h1>
-              Order Placed
-              Successfully!
-            </h1>
+            <h1>Order Placed Successfully!</h1>
 
-            <p>
-              Thank you, {customer.name}.
-            </p>
+            <p>Thank you, {customer.name}.</p>
 
-            <p>
-              Your order will be delivered to:
-            </p>
+            <p>Your order will be delivered to:</p>
 
             <div className="delivery-address">
-              <strong>
-                {customer.village}
-              </strong>
+              <strong>{customer.village}</strong>
 
               <br />
 
@@ -947,34 +734,21 @@ function App() {
               PIN: {pinCode}
             </div>
 
-            {orderId && (
-              <div className="order-number">
-                Order ID: RH{orderId}
-              </div>
-            )}
+            {orderId && (<div className="order-number">Order ID: RH{orderId}</div>)}
 
-            <button
-              className="primary-button"
-              onClick={() => {
-                setOrderPlaced(false);
-                setPage("home");
+            <button className="primary-button" onClick={() => {
+              setOrderPlaced(false);
+              setPage("home");
 
-                setCustomer({
-                  name: "",
-                  mobile: "",
-                  village: "",
-                  address: "",
-                  instructions: "",
-                });
+              setCustomer({ name: "", mobile: "", village: "", address: "", instructions: "" });
 
-                setPinCode("");
-                setLocation("");
-                setCoordinates(null);
-                setPaymentMethod("cod");
+              setPinCode("");
+              setLocation("");
+              setCoordinates(null);
+              setPaymentMethod("cod");
 
-                loadProducts();
-              }}
-            >
+              loadProducts();
+            }}>
               Continue Shopping
             </button>
 
@@ -987,422 +761,97 @@ function App() {
 
         <main className="checkout-page">
 
-          <button
-            className="back-button"
-            onClick={() => setPage("cart")}
-          >
-            ← Back to Cart
-          </button>
+          <button className="back-button" onClick={() => setPage("cart")}>← Back to Cart</button>
 
           <h1>Checkout</h1>
 
           <div className="checkout-layout">
 
-            <form
-              className="customer-form"
-              onSubmit={placeOrder}
-            >
+            <form className="customer-form" onSubmit={placeOrder}>
 
-              <h2>
-                📍 Delivery Details
-              </h2>
+              <h2>📍 Delivery Details</h2>
 
-              <p className="form-description">
-                Enter your details so we can
-                deliver your order to your home.
-              </p>
+              <p className="form-description">Enter your details so we can deliver your order to your home.</p>
 
-              <label>
-                Full Name *
-              </label>
+              <label>Full Name *</label>
 
-              <input
-                type="text"
-                value={customer.name}
-                onChange={(event) =>
-                  updateCustomer(
-                    "name",
-                    event.target.value
-                  )
-                }
-                placeholder="Enter your full name"
-                required
-              />
+              <input type="text" value={customer.name} onChange={(event) => updateCustomer("name", event.target.value)} placeholder="Enter your full name" required />
 
-              <label>
-                Mobile Number *
-              </label>
+              <label>Mobile Number *</label>
 
-              <input
-                type="tel"
-                value={customer.mobile}
-                onChange={(event) =>
-                  updateMobile(
-                    event.target.value
-                  )
-                }
-                placeholder="Enter 10 digit mobile number"
-                maxLength="10"
-                inputMode="numeric"
-                required
-              />
+              <input type="tel" value={customer.mobile} onChange={(event) => updateMobile(event.target.value)} placeholder="Enter 10 digit mobile number" maxLength="10" inputMode="numeric" required />
 
-              <small>
-                Enter exactly 10 digits.
-              </small>
+              <small>Enter exactly 10 digits.</small>
 
-              <label>
-                PIN Code *
-              </label>
+              <label>PIN Code *</label>
 
-              <div
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                }}
-              >
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength="6"
-                  value={pinCode}
-                  onChange={(event) =>
-                    updatePinCode(
-                      event.target.value
-                    )
-                  }
-                  placeholder="6-digit PIN"
-                  required
-                />
+              <div style={{ display: "flex", gap: "10px" }}>
+                <input type="text" inputMode="numeric" maxLength="6" value={pinCode} onChange={(event) => updatePinCode(event.target.value)} placeholder="6-digit PIN" required />
 
-                <button
-                  type="button"
-                  className="primary-button"
-                  onClick={detectLocationByPin}
-                  disabled={locationLoading}
-                >
-                  {locationLoading
-                    ? "Finding..."
-                    : "Detect"}
-                </button>
+                <button type="button" className="primary-button" onClick={detectLocationByPin} disabled={locationLoading}>{locationLoading ? "Finding..." : "Detect"}</button>
               </div>
 
-              <button
-                type="button"
-                className="primary-button"
-                style={{
-                  marginTop: "10px",
-                }}
-                onClick={detectMyLocation}
-                disabled={locationLoading}
-              >
-                📍 Detect My Current Location
-              </button>
+              <button type="button" className="primary-button" style={{ marginTop: "10px" }} onClick={detectMyLocation} disabled={locationLoading}>📍 Detect My Current Location</button>
 
-              {location && (
-                <div
-                  style={{
-                    marginTop: "10px",
-                    marginBottom: "15px",
-                    padding: "12px",
-                    background: "#f1f8e9",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <strong>
-                    📍 Delivery Location
-                  </strong>
+              {location && (<div style={{ marginTop: "10px", marginBottom: "15px", padding: "12px", background: "#f1f8e9", borderRadius: "8px" }}><strong>📍 Delivery Location</strong><p>{location}</p><p>📮 PIN: <strong>{pinCode || "Not detected"}</strong></p></div>)}
 
-                  <p>
-                    {location}
-                  </p>
+              <label>Village / Town *</label>
 
-                  <p>
-                    📮 PIN:{" "}
-                    <strong>
-                      {pinCode ||
-                        "Not detected"}
-                    </strong>
-                  </p>
-                </div>
-              )}
+              <input type="text" value={customer.village} onChange={(event) => updateCustomer("village", event.target.value)} placeholder="Detected village / town" required />
 
-              <label>
-                Village / Town *
-              </label>
+              <label>House / Door Number & Address *</label>
 
-              <input
-                type="text"
-                value={customer.village}
-                onChange={(event) =>
-                  updateCustomer(
-                    "village",
-                    event.target.value
-                  )
-                }
-                placeholder="Detected village / town"
-                required
-              />
+              <textarea value={customer.address} onChange={(event) => updateCustomer("address", event.target.value)} placeholder="House number, street, landmark..." rows="4" required />
 
-              <label>
-                House / Door Number & Address *
-              </label>
+              <label>Delivery Instructions</label>
 
-              <textarea
-                value={customer.address}
-                onChange={(event) =>
-                  updateCustomer(
-                    "address",
-                    event.target.value
-                  )
-                }
-                placeholder="House number, street, landmark..."
-                rows="4"
-                required
-              />
-
-              <label>
-                Delivery Instructions
-              </label>
-
-              <textarea
-                value={customer.instructions}
-                onChange={(event) =>
-                  updateCustomer(
-                    "instructions",
-                    event.target.value
-                  )
-                }
-                placeholder="Example: Please call me when you arrive."
-                rows="3"
-              />
+              <textarea value={customer.instructions} onChange={(event) => updateCustomer("instructions", event.target.value)} placeholder="Example: Please call me when you arrive." rows="3" />
 
               {/* PAYMENT */}
 
-              <h2 className="payment-title">
-                💳 Payment Method
-              </h2>
+              <h2 className="payment-title">💳 Payment Method</h2>
 
               <div className="payment-option">
 
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={
-                    paymentMethod === "cod"
-                  }
-                  onChange={() =>
-                    setPaymentMethod("cod")
-                  }
-                />
+                <input type="radio" name="payment" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} />
 
                 <div>
-                  <strong>
-                    💵 Cash on Delivery
-                  </strong>
+                  <strong>💵 Cash on Delivery</strong>
 
-                  <p>
-                    Pay when your order arrives.
-                  </p>
+                  <p>Pay when your order arrives.</p>
                 </div>
 
               </div>
 
               <div className="payment-option">
 
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={
-                    paymentMethod === "upi"
-                  }
-                  onChange={() =>
-                    setPaymentMethod("upi")
-                  }
-                />
+                <input type="radio" name="payment" checked={paymentMethod === "upi"} onChange={() => setPaymentMethod("upi")} />
 
                 <div>
-                  <strong>
-                    📱 UPI Payment
-                  </strong>
+                  <strong>📱 UPI Payment</strong>
 
-                  <p>
-                    Pay using Google Pay,
-                    PhonePe or another UPI app.
-                  </p>
+                  <p>Pay using Google Pay, PhonePe or another UPI app.</p>
                 </div>
 
               </div>
 
-              {paymentMethod === "upi" && (
-                <div className="upi-payment-box">
-
-                  <h3>
-                    📷 Scan & Pay
-                  </h3>
-
-                  <p>
-                    Scan this QR code using
-                    your UPI application.
-                  </p>
-
-                  <div className="qr-container">
-
-                    <QRCodeSVG
-                      value={upiPaymentUrl}
-                      size={220}
-                      level="H"
-                    />
-
-                  </div>
-
-                  <p>
-                    <strong>
-                      UPI ID:
-                    </strong>{" "}
-                    {UPI_ID}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Amount:
-                    </strong>{" "}
-                    ₹{total.toFixed(2)}
-                  </p>
-
-                  <a
-                    href={upiPaymentUrl}
-                    className="upi-open-button"
-                  >
-                    Open UPI App
-                  </a>
-
-                </div>
-              )}
+              {paymentMethod === "upi" && (<div className="upi-payment-box"><h3>📷 Scan & Pay</h3><p>Scan this QR code using your UPI application.</p><div className="qr-container"><QRCodeSVG value={upiPaymentUrl} size={220} level="H" /></div><p><strong>UPI ID:</strong> {UPI_ID}</p><p><strong>Amount:</strong> ₹{total.toFixed(2)}</p><a href={upiPaymentUrl} className="upi-open-button">Open UPI App</a></div>)}
 
               <div className="payment-option">
 
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={
-                    paymentMethod === "card"
-                  }
-                  onChange={() =>
-                    setPaymentMethod("card")
-                  }
-                />
+                <input type="radio" name="payment" checked={paymentMethod === "card"} onChange={() => setPaymentMethod("card")} />
 
                 <div>
-                  <strong>
-                    💳 Card Payment
-                  </strong>
+                  <strong>💳 Card Payment</strong>
 
-                  <p>
-                    Demo card payment.
-                  </p>
+                  <p>Demo card payment.</p>
                 </div>
 
               </div>
 
-              {paymentMethod === "card" && (
-                <div className="card-payment-box">
+              {paymentMethod === "card" && (<div className="card-payment-box"><h3>💳 Card Details</h3><label>Cardholder Name *</label><input type="text" value={cardDetails.name} onChange={(event) => setCardDetails((current) => ({ ...current, name: event.target.value }))} placeholder="Name on card" /><label>Card Number *</label><input type="text" value={cardDetails.number} onChange={(event) => updateCardNumber(event.target.value)} placeholder="16 digit card number" maxLength="16" inputMode="numeric" /><div className="card-row"><div><label>Expiry *</label><input type="text" value={cardDetails.expiry} onChange={(event) => updateExpiry(event.target.value)} placeholder="MM/YY" maxLength="5" /></div><div><label>CVV *</label><input type="password" value={cardDetails.cvv} onChange={(event) => updateCVV(event.target.value)} placeholder="CVV" maxLength="3" inputMode="numeric" /></div></div><small>Demo only. Card details are not sent to the RuralHome backend.</small></div>)}
 
-                  <h3>
-                    💳 Card Details
-                  </h3>
-
-                  <label>
-                    Cardholder Name *
-                  </label>
-
-                  <input
-                    type="text"
-                    value={cardDetails.name}
-                    onChange={(event) =>
-                      setCardDetails(
-                        (current) => ({
-                          ...current,
-                          name: event.target.value,
-                        })
-                      )
-                    }
-                    placeholder="Name on card"
-                  />
-
-                  <label>
-                    Card Number *
-                  </label>
-
-                  <input
-                    type="text"
-                    value={cardDetails.number}
-                    onChange={(event) =>
-                      updateCardNumber(
-                        event.target.value
-                      )
-                    }
-                    placeholder="16 digit card number"
-                    maxLength="16"
-                    inputMode="numeric"
-                  />
-
-                  <div className="card-row">
-
-                    <div>
-                      <label>
-                        Expiry *
-                      </label>
-
-                      <input
-                        type="text"
-                        value={cardDetails.expiry}
-                        onChange={(event) =>
-                          updateExpiry(
-                            event.target.value
-                          )
-                        }
-                        placeholder="MM/YY"
-                        maxLength="5"
-                      />
-                    </div>
-
-                    <div>
-                      <label>
-                        CVV *
-                      </label>
-
-                      <input
-                        type="password"
-                        value={cardDetails.cvv}
-                        onChange={(event) =>
-                          updateCVV(
-                            event.target.value
-                          )
-                        }
-                        placeholder="CVV"
-                        maxLength="3"
-                        inputMode="numeric"
-                      />
-                    </div>
-
-                  </div>
-
-                  <small>
-                    Demo only. Card details are
-                    not sent to the RuralHome backend.
-                  </small>
-
-                </div>
-              )}
-
-              <button
-                className="place-order-button"
-                type="submit"
-              >
-                Place Order • ₹
-                {total.toFixed(2)}
-              </button>
+              <button className="place-order-button" type="submit">Place Order • ₹{total.toFixed(2)}</button>
 
             </form>
 
@@ -1410,39 +859,23 @@ function App() {
 
             <div className="checkout-summary">
 
-              <h2>
-                Your Order
-              </h2>
+              <h2>Your Order</h2>
 
               {cart.map((item) => (
 
-                <div
-                  className="checkout-item"
-                  key={item.id}
-                >
+                <div className="checkout-item" key={item.id}>
 
-                  <div className="checkout-item-image">
-                    {item.emoji}
-                  </div>
+                  <div className="checkout-item-image">{item.emoji}</div>
 
                   <div className="checkout-item-info">
 
-                    <strong>
-                      {item.name}
-                    </strong>
+                    <strong>{item.name}</strong>
 
-                    <span>
-                      {item.quantity} × ₹
-                      {item.price}
-                    </span>
+                    <span>{item.quantity} × ₹{item.price}</span>
 
                   </div>
 
-                  <strong>
-                    ₹
-                    {Number(item.price) *
-                      item.quantity}
-                  </strong>
+                  <strong>₹{Number(item.price) * item.quantity}</strong>
 
                 </div>
 
@@ -1450,35 +883,11 @@ function App() {
 
               <hr />
 
-              <div className="summary-line">
-                <span>
-                  Subtotal
-                </span>
+              <div className="summary-line"><span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
 
-                <span>
-                  ₹{subtotal.toFixed(2)}
-                </span>
-              </div>
+              <div className="summary-line"><span>Delivery</span><span>₹{deliveryFee.toFixed(2)}</span></div>
 
-              <div className="summary-line">
-                <span>
-                  Delivery
-                </span>
-
-                <span>
-                  ₹{deliveryFee.toFixed(2)}
-                </span>
-              </div>
-
-              <div className="summary-total">
-                <span>
-                  Total
-                </span>
-
-                <strong>
-                  ₹{total.toFixed(2)}
-                </strong>
-              </div>
+              <div className="summary-total"><span>Total</span><strong>₹{total.toFixed(2)}</strong></div>
 
             </div>
 
@@ -1492,43 +901,21 @@ function App() {
 
         <main className="cart-page">
 
-          <button
-            className="back-button"
-            onClick={() => setPage("home")}
-          >
-            ← Continue Shopping
-          </button>
+          <button className="back-button" onClick={() => setPage("home")}>← Continue Shopping</button>
 
-          <h1>
-            Your Shopping Cart 🛒
-          </h1>
+          <h1>Your Shopping Cart 🛒</h1>
 
           {cart.length === 0 ? (
 
             <div className="empty-cart">
 
-              <div className="empty-cart-icon">
-                🛒
-              </div>
+              <div className="empty-cart-icon">🛒</div>
 
-              <h2>
-                Your cart is empty
-              </h2>
+              <h2>Your cart is empty</h2>
 
-              <p>
-                Add fresh vegetables,
-                fruits and groceries
-                to your cart.
-              </p>
+              <p>Add fresh vegetables, fruits and groceries to your cart.</p>
 
-              <button
-                className="primary-button"
-                onClick={() =>
-                  setPage("home")
-                }
-              >
-                Start Shopping
-              </button>
+              <button className="primary-button" onClick={() => setPage("home")}>Start Shopping</button>
 
             </div>
 
@@ -1540,76 +927,33 @@ function App() {
 
                 {cart.map((item) => (
 
-                  <div
-                    className="cart-item"
-                    key={item.id}
-                  >
+                  <div className="cart-item" key={item.id}>
 
-                    <div className="cart-item-image">
-                      {item.emoji}
-                    </div>
+                    <div className="cart-item-image">{item.emoji}</div>
 
                     <div className="cart-item-details">
 
-                      <h3>
-                        {item.name}
-                      </h3>
+                      <h3>{item.name}</h3>
 
-                      <p>
-                        {item.seller}
-                      </p>
+                      <p>{item.seller}</p>
 
-                      <strong>
-                        ₹{item.price} /{" "}
-                        {item.unit}
-                      </strong>
+                      <strong>₹{item.price} / {item.unit}</strong>
 
                     </div>
 
                     <div className="quantity-control">
 
-                      <button
-                        onClick={() =>
-                          decreaseQuantity(
-                            item.id
-                          )
-                        }
-                      >
-                        −
-                      </button>
+                      <button onClick={() => decreaseQuantity(item.id)}>−</button>
 
-                      <span>
-                        {item.quantity}
-                      </span>
+                      <span>{item.quantity}</span>
 
-                      <button
-                        onClick={() =>
-                          increaseQuantity(
-                            item.id
-                          )
-                        }
-                      >
-                        +
-                      </button>
+                      <button onClick={() => increaseQuantity(item.id)}>+</button>
 
                     </div>
 
-                    <div className="cart-item-price">
-                      ₹
-                      {Number(item.price) *
-                        item.quantity}
-                    </div>
+                    <div className="cart-item-price">₹{Number(item.price) * item.quantity}</div>
 
-                    <button
-                      className="remove-button"
-                      onClick={() =>
-                        removeFromCart(
-                          item.id
-                        )
-                      }
-                    >
-                      ✕
-                    </button>
+                    <button className="remove-button" onClick={() => removeFromCart(item.id)}>✕</button>
 
                   </div>
 
@@ -1619,60 +963,19 @@ function App() {
 
               <div className="order-summary">
 
-                <h2>
-                  Order Summary
-                </h2>
+                <h2>Order Summary</h2>
 
-                <div className="summary-line">
-                  <span>
-                    Items
-                  </span>
+                <div className="summary-line"><span>Items</span><span>{totalItems}</span></div>
 
-                  <span>
-                    {totalItems}
-                  </span>
-                </div>
+                <div className="summary-line"><span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
 
-                <div className="summary-line">
-                  <span>
-                    Subtotal
-                  </span>
-
-                  <span>
-                    ₹{subtotal.toFixed(2)}
-                  </span>
-                </div>
-
-                <div className="summary-line">
-                  <span>
-                    Delivery
-                  </span>
-
-                  <span>
-                    ₹{deliveryFee.toFixed(2)}
-                  </span>
-                </div>
+                <div className="summary-line"><span>Delivery</span><span>₹{deliveryFee.toFixed(2)}</span></div>
 
                 <hr />
 
-                <div className="summary-total">
-                  <span>
-                    Total
-                  </span>
+                <div className="summary-total"><span>Total</span><strong>₹{total.toFixed(2)}</strong></div>
 
-                  <strong>
-                    ₹{total.toFixed(2)}
-                  </strong>
-                </div>
-
-                <button
-                  className="checkout-button"
-                  onClick={() =>
-                    setPage("checkout")
-                  }
-                >
-                  Proceed to Checkout →
-                </button>
+                <button className="checkout-button" onClick={() => setPage("checkout")}>Proceed to Checkout →</button>
 
               </div>
 
@@ -1694,71 +997,25 @@ function App() {
 
             <div className="hero-content">
 
-              <div className="small-label">
-                🌱 Supporting Rural Communities
-              </div>
+              <div className="small-label">🌱 Supporting Rural Communities</div>
 
-              <h1>
-                Fresh & Essential Items
-                <br />
+              <h1>Fresh & Essential Items<br /><span>Delivered to Your Home</span></h1>
 
-                <span>
-                  Delivered to Your Home
-                </span>
-              </h1>
-
-              <p>
-                Order fresh vegetables,
-                fruits, groceries and
-                daily essentials from
-                nearby local shops and
-                farmers.
-              </p>
+              <p>Order fresh vegetables, fruits, groceries and daily essentials from nearby local shops and farmers.</p>
 
               {/* SEARCH */}
 
               <div className="search-box">
 
-                <input
-                  type="text"
-                  value={searchText}
-                  onChange={(event) =>
-                    setSearchText(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Search vegetables, fruits, groceries..."
-                />
+                <input type="text" value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="Search vegetables, fruits, groceries..." />
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    const section =
-                      document.querySelector(
-                        ".products-section"
-                      );
-
-                    if (section) {
-                      section.scrollIntoView({
-                        behavior: "smooth",
-                      });
-                    }
-                  }}
-                >
-                  🔍 Search
-                </button>
+                <button type="button" onClick={() => { const section = document.querySelector(".products-section"); if (section) { section.scrollIntoView({ behavior: "smooth" }); } }}>🔍 Search</button>
 
               </div>
 
             </div>
 
-            <div className="hero-vegetables">
-              <div>🥕</div>
-              <div>🍅</div>
-              <div>🥦</div>
-              <div>🥔</div>
-              <div>🍎</div>
-            </div>
+            <div className="hero-vegetables"><div>🥕</div><div>🍅</div><div>🥦</div><div>🥔</div><div>🍎</div></div>
 
           </section>
 
@@ -1770,13 +1027,9 @@ function App() {
 
               <div>
 
-                <p className="section-label">
-                  EXPLORE
-                </p>
+                <p className="section-label">EXPLORE</p>
 
-                <h2>
-                  Shop by Category
-                </h2>
+                <h2>Shop by Category</h2>
 
               </div>
 
@@ -1786,28 +1039,11 @@ function App() {
 
               {categories.map((category) => (
 
-                <button
-                  className={
-                    selectedCategory ===
-                    category.name
-                      ? "category-card active"
-                      : "category-card"
-                  }
-                  key={category.name}
-                  onClick={() =>
-                    selectCategory(
-                      category.name
-                    )
-                  }
-                >
+                <button className={selectedCategory === category.name ? "category-card active" : "category-card"} key={category.name} onClick={() => selectCategory(category.name)}>
 
-                  <div className="category-icon">
-                    {category.emoji}
-                  </div>
+                  <div className="category-icon">{category.emoji}</div>
 
-                  <span>
-                    {category.name}
-                  </span>
+                  <span>{category.name}</span>
 
                 </button>
 
@@ -1825,23 +1061,13 @@ function App() {
 
               <div>
 
-                <p className="section-label">
-                  FRESH FROM LOCAL SELLERS
-                </p>
+                <p className="section-label">FRESH FROM LOCAL SELLERS</p>
 
-                <h2>
-                  {selectedCategory === "All"
-                    ? "Fresh & Popular"
-                    : selectedCategory}
-                </h2>
+                <h2>{selectedCategory === "All" ? "Fresh & Popular" : selectedCategory}</h2>
 
               </div>
 
-              <span className="product-count">
-                {productsLoading
-                  ? "Loading..."
-                  : `${filteredProducts.length} products`}
-              </span>
+              <span className="product-count">{productsLoading ? "Loading..." : `${filteredProducts.length} products`}</span>
 
             </div>
 
@@ -1851,18 +1077,11 @@ function App() {
 
                 <div className="no-products">
 
-                  <div>
-                    ⏳
-                  </div>
+                  <div>⏳</div>
 
-                  <h3>
-                    Loading products...
-                  </h3>
+                  <h3>Loading products...</h3>
 
-                  <p>
-                    Getting products
-                    from local sellers.
-                  </p>
+                  <p>Getting products from local sellers.</p>
 
                 </div>
 
@@ -1870,90 +1089,47 @@ function App() {
 
                 <div className="no-products">
 
-                  <div>
-                    🔍
-                  </div>
+                  <div>🔍</div>
 
                   <h3>Item not available</h3>
 
-<p>
-  Sorry, this item is not currently available.
-</p>
+                  <p>Sorry, this item is not currently available.</p>
 
-<button
-  className="primary-button"
-  onClick={() => {
-    setSearchText("");
-    setSelectedCategory("All");
-  }}
->
-  View All Products
-</button>
+                  <button className="primary-button" onClick={() => { setSearchText(""); setSelectedCategory("All"); }}>View All Products</button>
 
                 </div>
 
               ) : (
 
-                filteredProducts.map(
-                  (product) => (
+                filteredProducts.map((product) => (
 
-                    <div
-                      className="product-card"
-                      key={product.id}
-                    >
+                  <div className="product-card" key={product.id}>
 
-                      {product.fresh && (
-                        <span className="fresh-badge">
-                          Fresh Today
-                        </span>
-                      )}
+                    {product.fresh && <span className="fresh-badge">Fresh Today</span>}
 
-                      <div className="product-image">
-                        {product.emoji}
-                      </div>
+                    <div className="product-image">{product.emoji}</div>
 
-                      <div className="product-info">
+                    <div className="product-info">
 
-                        <p className="seller-name">
-                          {product.seller}
-                        </p>
+                      <p className="seller-name">{product.seller}</p>
 
-                        <h3>
-                          {product.name}
-                        </h3>
+                      <h3>{product.name}</h3>
 
-                        <p className="unit-text">
-                          {product.category} •{" "}
-                          {product.unit}
-                        </p>
+                      <p className="unit-text">{product.category} • {product.unit}</p>
 
-                        <div className="product-bottom">
+                      <div className="product-bottom">
 
-                          <div className="price">
-                            ₹{product.price}
+                        <div className="price">₹{product.price}<span>/ {product.unit}</span></div>
 
-                            <span>
-                              / {product.unit}
-                            </span>
-                          </div>
-
-                          <button
-                            className="add-button"
-                            onClick={() =>
-                              addToCart(product)
-                            }
-                          >
-                            + Add
-                          </button>
-
-                        </div>
+                        <button className="add-button" onClick={() => addToCart(product)}>+ Add</button>
 
                       </div>
 
                     </div>
 
-                  )
-                )
+                  </div>
+
+                ))
 
               )}
 
@@ -1967,44 +1143,23 @@ function App() {
 
             <div className="why-content">
 
-              <p className="section-label">
-                WHY RURALHOME?
-              </p>
+              <p className="section-label">WHY RURALHOME?</p>
 
-              <h2>
-                Bringing the local market
-                closer to your home.
-              </h2>
+              <h2>Bringing the local market closer to your home.</h2>
 
-              <p>
-                We connect rural families
-                with nearby farmers,
-                vegetable sellers and
-                local shops. Shop locally
-                and get your daily
-                essentials delivered to
-                your doorstep.
-              </p>
+              <p>We connect rural families with nearby farmers, vegetable sellers and local shops. Shop locally and get your daily essentials delivered to your doorstep.</p>
 
               <div className="benefits">
 
                 <div>
 
-                  <span>
-                    🥬
-                  </span>
+                  <span>🥬</span>
 
                   <div>
 
-                    <h3>
-                      Fresh Products
-                    </h3>
+                    <h3>Fresh Products</h3>
 
-                    <p>
-                      Fresh vegetables
-                      and farm products
-                      from local sellers.
-                    </p>
+                    <p>Fresh vegetables and farm products from local sellers.</p>
 
                   </div>
 
@@ -2012,22 +1167,13 @@ function App() {
 
                 <div>
 
-                  <span>
-                    🏪
-                  </span>
+                  <span>🏪</span>
 
                   <div>
 
-                    <h3>
-                      Support Local Sellers
-                    </h3>
+                    <h3>Support Local Sellers</h3>
 
-                    <p>
-                      Help local farmers
-                      and small shops
-                      reach more
-                      customers.
-                    </p>
+                    <p>Help local farmers and small shops reach more customers.</p>
 
                   </div>
 
@@ -2035,22 +1181,13 @@ function App() {
 
                 <div>
 
-                  <span>
-                    🏠
-                  </span>
+                  <span>🏠</span>
 
                   <div>
 
-                    <h3>
-                      Home Delivery
-                    </h3>
+                    <h3>Home Delivery</h3>
 
-                    <p>
-                      Order from home
-                      and receive
-                      products at your
-                      doorstep.
-                    </p>
+                    <p>Order from home and receive products at your doorstep.</p>
 
                   </div>
 
@@ -2070,22 +1207,11 @@ function App() {
 
       <footer>
 
-        <div className="footer-logo">
-          🌾 Rural
-          <span>
-            Home
-          </span>
-        </div>
+        <div className="footer-logo">🌾 Rural<span>Home</span></div>
 
-        <p>
-          Connecting rural families
-          with local shops and fresh
-          farm products.
-        </p>
+        <p>Connecting rural families with local shops and fresh farm products.</p>
 
-        <p className="copyright">
-          © 2026 RuralHome Delivery
-        </p>
+        <p className="copyright">© 2026 RuralHome Delivery</p>
 
       </footer>
 
@@ -2093,57 +1219,21 @@ function App() {
 
       {showLogin && (
 
-        <div
-          className="modal-overlay"
-          onClick={() =>
-            setShowLogin(false)
-          }
-        >
+        <div className="modal-overlay" onClick={() => setShowLogin(false)}>
 
-          <div
-            className="login-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
+          <div className="login-modal" onClick={(event) => event.stopPropagation()}>
 
-            <button
-              className="close-modal"
-              onClick={() =>
-                setShowLogin(false)
-              }
-            >
-              ✕
-            </button>
+            <button className="close-modal" onClick={() => setShowLogin(false)}>✕</button>
 
-            <div className="login-icon">
-              👋
-            </div>
+            <div className="login-icon">👋</div>
 
-            <h2>
-              Welcome to RuralHome
-            </h2>
+            <h2>Welcome to RuralHome</h2>
 
-            <p>
-              Login will be connected
-              to the backend later.
-            </p>
+            <p>Login will be connected to the backend later.</p>
 
-            <input
-              type="text"
-              placeholder="Mobile Number"
-              maxLength="10"
-              inputMode="numeric"
-            />
+            <input type="text" placeholder="Mobile Number" maxLength="10" inputMode="numeric" />
 
-            <button
-              className="primary-button"
-              onClick={() =>
-                setShowLogin(false)
-              }
-            >
-              Continue
-            </button>
+            <button className="primary-button" onClick={() => setShowLogin(false)}>Continue</button>
 
           </div>
 
